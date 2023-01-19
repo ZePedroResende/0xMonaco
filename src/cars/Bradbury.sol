@@ -1,9 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.17;
 
+import "forge-std/console.sol";
 import "./../interfaces/ICar.sol";
+import "solmate/utils/SafeCastLib.sol";
 
 contract Bradbury is ICar {
+    using SafeCastLib for uint256;
+
     uint256 internal constant LATE_GAME = 600;
     uint256 internal constant BLITZKRIEG = 800; // all-out spending
 
@@ -12,9 +16,16 @@ contract Bradbury is ICar {
     uint256 internal constant SUPER_SHELL_FLOOR = 300;
     uint256 internal constant SHIELD_FLOOR = 400;
 
+    // how much extra we're willing to spend per accel if we're slower too far behind
+    uint256 internal constant LAG_PREMIUM_TOO_FAR = 5;
+    // how much extra we're willing to spend per accel if we're near 2nd but slower
+    uint256 internal constant LAG_PREMIUM_NEAR_BUT_SLOWER = 3;
+    // how much distance we want at most from the 2nd player
+    uint256 internal constant LAG_MAX_DESIRED_SPACING = 20;
+
     enum Strat {
         LAG, // stick to 3rd place, but close enough to 2nd car
-        HOLD, // hold your spot
+        HODL, // hold your spot
         BLITZKRIEG // all out war
     }
 
@@ -22,60 +33,129 @@ contract Bradbury is ICar {
         Monaco monaco,
         Monaco.CarData[] calldata allCars,
         uint256[] calldata bananas,
-        uint256 ourCarIndex
+        uint256 selfIndex
     ) external {
         Strat strat = Strat.LAG;
-        Monaco.CarData calldata lagCar;
 
-        // find lag car
-        if (ourCarIndex == 0) {
-            lagCar = allCars[1];
-        } else if (ourCarIndex == 1) {
-            lagCar = allCars[2];
+        Monaco.CarData memory self = allCars[selfIndex];
+        Monaco.CarData memory nextCar;
+
+        if (allCars[0].y >= BLITZKRIEG) {
+            // leader is almost at the end! blitzkrieg regardless
+            strat = Strat.BLITZKRIEG;
+        } else if (selfIndex < 2) {
+            // we're in 1st or 2nd
+            strat = Strat.HODL;
+            nextCar = allCars[selfIndex - 1];
         } else {
-            // we're in the lead
-            strat = Strat.HOLD;
+            // we're in 3rd
+            strat = Strat.LAG;
+            nextCar = allCars[selfIndex - 1];
         }
 
         // if we're near the end, all out war
-        if (allCars[ourCarIndex].y >= BLITZKRIEG) {
+        if (allCars[selfIndex].y >= BLITZKRIEG) {
             strat = Strat.BLITZKRIEG;
         }
 
         if (strat == Strat.LAG) {
-            lag(monaco, allCars, bananas, ourCarIndex);
-        } else if (strat == Strat.HOLD) {
-            hold(monaco, allCars, bananas, ourCarIndex);
+            console.log("LAG");
+            lag(monaco, allCars, bananas, selfIndex, self, nextCar);
+        } else if (strat == Strat.HODL) {
+            console.log("HODL");
+            // hodl(monaco, allCars, bananas, selfIndex, self);
         } else {
-            blitzkrieg(monaco, allCars, bananas, ourCarIndex);
+            console.log("BLITZKRIEG");
+            // blitzkrieg(monaco, allCars, bananas, selfIndex, self);
         }
     }
 
-    function lag(Monaco monaco, Monaco.CarData[] calldata allCars, uint256[] calldata bananas, uint256 ourCarIndex)
-        internal
-    {
-        // TODO
-        if (monaco.getAccelerateCost(1) < ACCEL_FLOOR) monaco.buyAcceleration(1);
-        if (monaco.getShellCost(1) < SHELL_FLOOR) monaco.buyShell(1);
-        if (ourCarIndex == 2 && monaco.getSuperShellCost(1) < SUPER_SHELL_FLOOR) monaco.buySuperShell(1);
-        if (ourCarIndex != 2 && monaco.getShieldCost(1) < SHIELD_FLOOR) monaco.buyShield(1);
+    function lag(
+        Monaco monaco,
+        Monaco.CarData[] calldata allCars,
+        uint256[] calldata bananas,
+        uint256 selfIndex,
+        Monaco.CarData memory self,
+        Monaco.CarData memory otherCar
+    ) internal {
+        buy_accel_cheap(monaco, self);
+
+        // uint256 selfNextPos = self.y + self.speed;
+        // uint256 otherNextPos = otherCar.y + otherCar.speed;
+        //
+        // // check if we're too far behind
+        // if (otherNextPos > selfNextPos + LAG_MAX_DESIRED_SPACING) {
+        //     // accelerate with a premium
+        //     // buy_accel_at_premium(monaco, self, 2, ACCEL_FLOOR * LAG_PREMIUM_TOO_FAR);
+        // } else if (otherCar.speed > self.speed) {
+        //     // we're close but the other car is going faster
+        //     // we try to buy, but we don't panic that much
+        //     uint256 diff = otherCar.speed - self.speed;
+        //     // buy_accel_at_premium(monaco, self, diff, ACCEL_FLOOR * LAG_PREMIUM_NEAR_BUT_SLOWER);
+        // }
+
+        // TODO if we're about to hit a banana, consider throwing a shell
     }
 
-    function hold(Monaco monaco, Monaco.CarData[] calldata allCars, uint256[] calldata bananas, uint256 ourCarIndex)
-        internal
-    {
-        lag(monaco, allCars, bananas, ourCarIndex);
-        //TODO
+    function hodl(
+        Monaco monaco,
+        Monaco.CarData[] calldata allCars,
+        uint256[] calldata bananas,
+        uint256 selfIndex,
+        Monaco.CarData memory self
+    ) internal {
+        buy_accel_cheap(monaco, self);
     }
 
     function blitzkrieg(
         Monaco monaco,
         Monaco.CarData[] calldata allCars,
         uint256[] calldata bananas,
-        uint256 ourCarIndex
+        uint256 selfIndex,
+        Monaco.CarData memory self
     ) internal {
-        //TODO
-        lag(monaco, allCars, bananas, ourCarIndex);
+        // buy_accel_at_premium(monaco, self, type(uint256).max, type(uint256).max);
+    }
+
+    //
+    // aux
+    //
+    function buy_accel_cheap(Monaco monaco, Monaco.CarData memory self) internal {
+        uint256 i = 0;
+        while (i < 2) {
+            i++;
+            uint256 cost = monaco.getAccelerateCost(1);
+            if (cost == 0 || cost > self.balance || cost > ACCEL_FLOOR) {
+                console.log(cost);
+                return;
+            }
+            console.log("buying");
+            monaco.buyAcceleration(1);
+            // self.speed += 1;
+            console.log(self.balance);
+            console.log("cost", cost);
+            self.balance -= cost.safeCastTo32();
+            console.log(self.balance);
+        }
+    }
+
+    function buy_accel_at_premium(Monaco monaco, Monaco.CarData memory self, uint256 max_units, uint256 max_unit_cost)
+        internal
+    {
+        while (true) {
+            if (max_units == 0) return;
+            try monaco.getAccelerateCost(1) returns (uint256 cost) {
+                if (cost > self.balance || cost > max_unit_cost) {
+                    return;
+                }
+                monaco.buyAcceleration(1);
+                self.speed += 1;
+                self.balance -= cost.safeCastTo32();
+            } catch {
+                return;
+            }
+            max_units -= 1;
+        }
     }
 
     function sayMyName() external pure returns (string memory) {

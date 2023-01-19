@@ -50,7 +50,7 @@ contract MonacoTest is Test {
 
     function testGames() public {
         ICar w1 = new Bradbury();
-        ICar w2 = new Sauce();
+        ICar w2 = new Floor();
         ICar w3 = new Floor();
         names[w1] = "   Bradbury";
         names[w2] = "      Sauce";
@@ -136,7 +136,9 @@ contract MonacoTest is Test {
                         ", sp=",
                         vm.toString(car.speed),
                         ", sh=",
-                        vm.toString(car.shield)
+                        vm.toString(car.shield),
+                        ", accel_cost=",
+                        vm.toString(monaco.getAccelerateCost(1))
                     )
                 );
                 // emit log_address(address(car.car));

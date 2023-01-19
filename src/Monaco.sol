@@ -190,7 +190,7 @@ contract Monaco {
                 currentCar = currentTurnCar; // Set the current car temporarily.
 
                 // Call the car to have it take its turn with a max of 2 million gas, and catch any errors that occur.
-                try currentTurnCar.takeYourTurn{gas: 2_000_000}(this, allCarData, bananas, yourCarIndex) {} catch {}
+                currentTurnCar.takeYourTurn{gas: 2_000_000}(this, allCarData, bananas, yourCarIndex);
 
                 delete currentCar; // Restore the current car to the zero address.
 
