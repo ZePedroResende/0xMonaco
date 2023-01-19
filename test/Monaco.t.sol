@@ -49,7 +49,7 @@ contract MonacoTest is Test {
     }
 
     function testGames() public {
-        ICar w1 = new PermaShield();
+        ICar w1 = new Bradbury();
         ICar w2 = new Sauce();
         ICar w3 = new Floor();
         names[w1] = "   Bradbury";

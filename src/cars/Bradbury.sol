@@ -42,20 +42,16 @@ contract Bradbury is ICar {
 
         if (allCars[0].y >= BLITZKRIEG) {
             // leader is almost at the end! blitzkrieg regardless
+            // of if the leader is us or someone else
             strat = Strat.BLITZKRIEG;
         } else if (selfIndex < 2) {
             // we're in 1st or 2nd
             strat = Strat.HODL;
-            nextCar = allCars[selfIndex - 1];
+            // nextCar = allCars[selfIndex - 1];
         } else {
             // we're in 3rd
             strat = Strat.LAG;
             nextCar = allCars[selfIndex - 1];
-        }
-
-        // if we're near the end, all out war
-        if (allCars[selfIndex].y >= BLITZKRIEG) {
-            strat = Strat.BLITZKRIEG;
         }
 
         if (strat == Strat.LAG) {
@@ -63,10 +59,10 @@ contract Bradbury is ICar {
             lag(monaco, allCars, bananas, selfIndex, self, nextCar);
         } else if (strat == Strat.HODL) {
             console.log("HODL");
-            // hodl(monaco, allCars, bananas, selfIndex, self);
+            hodl(monaco, allCars, bananas, selfIndex, self);
         } else {
             console.log("BLITZKRIEG");
-            // blitzkrieg(monaco, allCars, bananas, selfIndex, self);
+            blitzkrieg(monaco, allCars, bananas, selfIndex, self);
         }
     }
 
@@ -80,19 +76,19 @@ contract Bradbury is ICar {
     ) internal {
         buy_accel_cheap(monaco, self);
 
-        // uint256 selfNextPos = self.y + self.speed;
-        // uint256 otherNextPos = otherCar.y + otherCar.speed;
-        //
-        // // check if we're too far behind
-        // if (otherNextPos > selfNextPos + LAG_MAX_DESIRED_SPACING) {
-        //     // accelerate with a premium
-        //     // buy_accel_at_premium(monaco, self, 2, ACCEL_FLOOR * LAG_PREMIUM_TOO_FAR);
-        // } else if (otherCar.speed > self.speed) {
-        //     // we're close but the other car is going faster
-        //     // we try to buy, but we don't panic that much
-        //     uint256 diff = otherCar.speed - self.speed;
-        //     // buy_accel_at_premium(monaco, self, diff, ACCEL_FLOOR * LAG_PREMIUM_NEAR_BUT_SLOWER);
-        // }
+        uint256 selfNextPos = self.y + self.speed;
+        uint256 otherNextPos = otherCar.y + otherCar.speed;
+
+        // check if we're too far behind
+        if (otherNextPos > selfNextPos + LAG_MAX_DESIRED_SPACING) {
+            // accelerate with a premium
+            buy_accel_at_premium(monaco, self, 2, ACCEL_FLOOR * LAG_PREMIUM_TOO_FAR);
+        } else if (otherCar.speed > self.speed) {
+            // we're close but the other car is going faster
+            // we try to buy, but we don't panic that much
+            uint256 diff = otherCar.speed - self.speed;
+            buy_accel_at_premium(monaco, self, diff, ACCEL_FLOOR * LAG_PREMIUM_NEAR_BUT_SLOWER);
+        }
 
         // TODO if we're about to hit a banana, consider throwing a shell
     }
@@ -114,28 +110,21 @@ contract Bradbury is ICar {
         uint256 selfIndex,
         Monaco.CarData memory self
     ) internal {
-        // buy_accel_at_premium(monaco, self, type(uint256).max, type(uint256).max);
+        buy_accel_at_premium(monaco, self, type(uint256).max, type(uint256).max);
     }
 
     //
     // aux
     //
     function buy_accel_cheap(Monaco monaco, Monaco.CarData memory self) internal {
-        uint256 i = 0;
-        while (i < 2) {
-            i++;
+        while (true) {
             uint256 cost = monaco.getAccelerateCost(1);
-            if (cost == 0 || cost > self.balance || cost > ACCEL_FLOOR) {
-                console.log(cost);
+            if (cost > self.balance || cost > ACCEL_FLOOR) {
                 return;
             }
-            console.log("buying");
             monaco.buyAcceleration(1);
-            // self.speed += 1;
-            console.log(self.balance);
-            console.log("cost", cost);
+            self.speed += 1;
             self.balance -= cost.safeCastTo32();
-            console.log(self.balance);
         }
     }
 
@@ -144,16 +133,13 @@ contract Bradbury is ICar {
     {
         while (true) {
             if (max_units == 0) return;
-            try monaco.getAccelerateCost(1) returns (uint256 cost) {
-                if (cost > self.balance || cost > max_unit_cost) {
-                    return;
-                }
-                monaco.buyAcceleration(1);
-                self.speed += 1;
-                self.balance -= cost.safeCastTo32();
-            } catch {
+            uint256 cost = monaco.getAccelerateCost(1);
+            if (cost > self.balance || cost > max_unit_cost) {
                 return;
             }
+            monaco.buyAcceleration(1);
+            self.speed += 1;
+            self.balance -= cost.safeCastTo32();
             max_units -= 1;
         }
     }
