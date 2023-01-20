@@ -115,7 +115,7 @@ contract Bradbury is ICar {
             front_car = allCars[self_index - 1];
 
             state.remainingTurns = self.speed > 0 ? (800 - self.y) / self.speed : 800;
-            state.targetSpend = state.initialBalance / state.remainingTurns *  / 10;
+            state.targetSpend = state.initialBalance / state.remainingTurns * 9 / 10;
         }
 
         // priority: try to sweep floor on acceleration
