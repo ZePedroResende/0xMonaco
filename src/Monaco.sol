@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.17;
 
+import "forge-std/console.sol";
 import "./interfaces/ICar.sol";
 import "./utils/SignedWadMath.sol";
 
@@ -190,7 +191,12 @@ contract Monaco {
                 currentCar = currentTurnCar; // Set the current car temporarily.
 
                 // Call the car to have it take its turn with a max of 2 million gas, and catch any errors that occur.
-                try currentTurnCar.takeYourTurn{gas: 2_000_000}(this, allCarData, bananas, yourCarIndex) {} catch {}
+                // currentTurnCar.takeYourTurn{gas: 2_000_000}(this, allCarData, bananas, yourCarIndex);
+                try currentTurnCar.takeYourTurn{gas: 2_000_000}(this, allCarData, bananas, yourCarIndex) {
+                    console.log("worked", currentTurnCar.sayMyName());
+                } catch {
+                    console.log("failed", currentTurnCar.sayMyName());
+                }
 
                 delete currentCar; // Restore the current car to the zero address.
 

@@ -106,6 +106,7 @@ contract MonacoTest is Test {
 
             Monaco.CarData[] memory allCarData = monaco.getAllCarData();
 
+            console.log("\nTurn", monaco.turns() - 1);
             for (uint256 i = 0; i < allCarData.length; i++) {
                 Monaco.CarData memory car = allCarData[i];
 
@@ -120,14 +121,8 @@ contract MonacoTest is Test {
                     currentTurn.bought[abilityIdx] = monaco.getActionsSold(Monaco.ActionType(abilityIdx));
                 }
 
-                if (lastTurn < monaco.turns()) {
-                    lastTurn = monaco.turns();
-                    console.log("");
-                }
                 console.log(
                     string.concat(
-                        vm.toString(monaco.turns() - 1),
-                        "  ",
                         names[car.car],
                         " ",
                         paddedInt(car.y),
