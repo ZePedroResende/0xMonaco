@@ -107,13 +107,15 @@ contract Bradbury is ICar {
 
             // try and spend 70% of our per-turn budget
             // leave some overhead for blitzkrieg
-            state.targetSpend = state.initialBalance / state.remainingTurns * 15 / 10;
+            state.remainingTurns = self.speed > 0 ? (800 - self.y) / self.speed : 800;
+            state.targetSpend = state.initialBalance / state.remainingTurns * 9 / 10;
         } else {
             // we're in 2nd or 3rd, lag behind the next car
             strat = Strat.LAG;
             front_car = allCars[self_index - 1];
 
-            state.targetSpend = state.initialBalance / state.remainingTurns * 15 / 10;
+            state.remainingTurns = self.speed > 0 ? (800 - self.y) / self.speed : 800;
+            state.targetSpend = state.initialBalance / state.remainingTurns *  / 10;
         }
 
         // priority: try to sweep floor on acceleration
