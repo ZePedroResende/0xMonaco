@@ -192,11 +192,7 @@ contract Monaco {
 
                 // Call the car to have it take its turn with a max of 2 million gas, and catch any errors that occur.
                 // currentTurnCar.takeYourTurn{gas: 2_000_000}(this, allCarData, bananas, yourCarIndex);
-                try currentTurnCar.takeYourTurn{gas: 2_000_000}(this, allCarData, bananas, yourCarIndex) {
-                    console.log("worked", currentTurnCar.sayMyName());
-                } catch {
-                    console.log("failed", currentTurnCar.sayMyName());
-                }
+                try currentTurnCar.takeYourTurn{gas: 2_000_000}(this, allCarData, bananas, yourCarIndex) {} catch {}
 
                 delete currentCar; // Restore the current car to the zero address.
 

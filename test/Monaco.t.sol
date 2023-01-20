@@ -49,11 +49,11 @@ contract MonacoTest is Test {
     }
 
     function testGames() public {
-        ICar w1 = new Bradbury();
-        ICar w2 = new Sauce();
+        ICar w1 = new Sauce();
+        ICar w2 = new Bradbury();
         ICar w3 = new Floor();
-        names[w1] = "   Bradbury";
-        names[w2] = "      Sauce";
+        names[w1] = "      Sauce";
+        names[w2] = "   Bradbury";
         names[w3] = "      Floor";
 
         monaco.register(w1);
@@ -106,7 +106,9 @@ contract MonacoTest is Test {
 
             Monaco.CarData[] memory allCarData = monaco.getAllCarData();
 
-            console.log("\nTurn", monaco.turns() - 1);
+            if (monaco.turns() % 3 == 0) {
+                console.log("\nTurn", monaco.turns() - 1);
+            }
             for (uint256 i = 0; i < allCarData.length; i++) {
                 Monaco.CarData memory car = allCarData[i];
 
@@ -121,21 +123,23 @@ contract MonacoTest is Test {
                     currentTurn.bought[abilityIdx] = monaco.getActionsSold(Monaco.ActionType(abilityIdx));
                 }
 
-                console.log(
-                    string.concat(
-                        names[car.car],
-                        " ",
-                        paddedInt(car.y),
-                        ": bal=",
-                        paddedInt(car.balance),
-                        ", sp=",
-                        vm.toString(car.speed),
-                        ", sh=",
-                        vm.toString(car.shield),
-                        ", accel_cost=",
-                        vm.toString(monaco.getAccelerateCost(1))
-                    )
-                );
+                if (monaco.turns() % 3 == 0) {
+                    console.log(
+                        string.concat(
+                            names[car.car],
+                            " ",
+                            paddedInt(car.y),
+                            ": bal=",
+                            paddedInt(car.balance),
+                            ", sp=",
+                            vm.toString(car.speed),
+                            ", sh=",
+                            vm.toString(car.shield),
+                            ", accel_cost=",
+                            vm.toString(monaco.getAccelerateCost(1))
+                        )
+                    );
+                }
                 // emit log_address(address(car.car));
                 // emit log_named_uint("balance", car.balance);
                 // emit log_named_uint("speed", car.speed);

@@ -12,10 +12,15 @@ contract Bradbury is ICar {
     uint256 internal constant BLITZKRIEG = 800; // all-out spending
     uint256 internal constant INITIAL_BALANCE = 17500;
 
+    uint256 internal constant INIT_ACCEL_COST = 12;
+
     uint256 internal constant ACCEL_FLOOR = 15;
     uint256 internal constant SHELL_FLOOR = 200;
     uint256 internal constant SUPER_SHELL_FLOOR = 300;
     uint256 internal constant SHIELD_FLOOR = 400;
+
+    uint256 internal constant ACCEL_HODL_MUL = 5;
+    uint256 internal constant ACCEL_BLITZKRIEG_MUL = 10;
 
     //
     // in Lag mode, we're in 3rd position
@@ -35,11 +40,14 @@ contract Bradbury is ICar {
     }
 
     struct TurnState {
+        bool leading;
         uint256 speed;
+        uint256 initialBalance;
         uint256 balance;
         uint256 y;
-        uint256 new_cost;
-        uint256 new_speed;
+        uint256 pctLeft;
+        uint256 remainingTurns;
+        uint256 targetSpend;
     }
 
     function takeYourTurn(
@@ -57,65 +65,106 @@ contract Bradbury is ICar {
         Monaco.CarData memory backCar;
         if (selfIndex < 2) backCar = allCars[selfIndex + 1];
 
-        TurnState memory state =
-            TurnState({balance: self.balance, speed: self.speed, y: self.y, new_cost: 0, new_speed: 0});
+        uint256 net_worths[3];
 
-        uint256 balancePctLeft = self.balance * 100 / INITIAL_BALANCE;
-        uint256 remainingTurns = self.speed > 0 ? (1000 - self.y) / self.speed : 1000;
+        TurnState memory state = TurnState({
+            leading: selfIndex == 0,
+            initialBalance: self.balance,
+            balance: self.balance,
+            speed: self.speed,
+            y: self.y,
+            pctLeft: self.balance * 100 / INITIAL_BALANCE,
+            remainingTurns: self.speed > 0 ? (1000 - self.y) / self.speed : 1000,
+            targetSpend: 0
+        });
         Strat strat = Strat.LAG;
+        if (state.remainingTurns == 0) state.remainingTurns = 1;
 
-        uint256 new_accel = 0;
+        //
+        // first move
+        // inspired by https://gist.github.com/xBA5ED/2459807a536e3dbc9d933713245c30ff
+        //
+        if (state.y == 0) {
+            // first turn
+            if (monaco.getAccelerateCost(1) <= INIT_ACCEL_COST) {
+                // we're the first car
+                state.balance -= monaco.buyAcceleration(15);
+                state.speed += 15;
+            }
+        }
 
-        // can we finish right away?
-
+        // define more state depending on race stage
         if (allCars[0].y >= BLITZKRIEG) {
             // leader is almost at the end! blitzkrieg regardless
             // of if the leader is us or someone else
             strat = Strat.BLITZKRIEG;
+
+            // we spend 100% of our budget per turn
+            state.targetSpend = state.initialBalance / state.remainingTurns;
         } else if (selfIndex == 0) {
             // we're in 1st, try to hold our position
             strat = Strat.HODL;
+
+            // try and spend 70% of our per-turn budget
+            // leave some overhead for blitzkrieg
+            state.targetSpend = state.initialBalance / state.remainingTurns * 7 / 10;
         } else {
-            // we're in 3rd, lag behind the next car
+            // we're in 2nd or 3rd, lag behind the next car
             strat = Strat.LAG;
             frontCar = allCars[selfIndex - 1];
+
+            state.targetSpend = state.initialBalance / state.remainingTurns * 7 / 10;
         }
 
-        if (strat == Strat.BLITZKRIEG) {
-            if (try_finish_right_now(monaco, state)) return;
-        }
+        // priority: try to sweep floor on acceleration
+        buy_accel_at_max(monaco, state, ACCEL_FLOOR);
 
-        buy_accel_cheap(monaco, state);
-
-        //
         if (strat == Strat.LAG) {
+            //
+            // LAG strat
+            //
             console.log("LAG");
-            //     uint256 selfNextPos = self.y + self.speed;
-            //     uint256 otherNextPos = frontCar.y + frontCar.speed;
-            //
-            //     // check if we're too far behind
-            //     if (otherNextPos > selfNextPos + LAG_MAX_DESIRED_SPACING) {
-            //         // accelerate with a premium
-            //         // buy_accel_at_premium(monaco, self, 2, ACCEL_FLOOR * LAG_PREMIUM_TOO_FAR);
-            //     } else if (frontCar.speed > self.speed) {
-            //         // we're close but the other car is going faster
-            //         // we try to buy, but we don't panic that much
-            //         uint256 diff = frontCar.speed - self.speed;
-            //         // buy_accel_at_premium(monaco, self, diff, ACCEL_FLOOR * LAG_PREMIUM_NEAR_BUT_SLOWER);
-            //     }
+
+            uint256 selfNextPos = self.y + self.speed;
+            uint256 otherNextPos = frontCar.y + frontCar.speed;
+
+            // check if we're too far behind
+            if (otherNextPos > selfNextPos + LAG_MAX_DESIRED_SPACING) {
+                // accelerate with a premium
+                // buy_accel_at_premium(monaco, self, 2, ACCEL_FLOOR * LAG_PREMIUM_TOO_FAR);
+            } else if (frontCar.speed > self.speed) {
+                // we're close but the other car is going faster
+                // we try to buy, but we don't panic that much
+                uint256 diff = frontCar.speed - self.speed;
+
+                // buy_accel_at_premium(monaco, state, ACCEL_FLOOR * 2);
+            }
         } else if (strat == Strat.HODL) {
+            //
+            // HODL strat
+            //
             console.log("HOLD");
-            //
+
+            buy_accel_at_max(monaco, state, ACCEL_FLOOR * ACCEL_HODL_MUL);
         } else {
-            console.log("BLITZKRIEG");
             //
-            //     // buy_accel_at_premium(monaco, self, type(uint256).max, ACCEL_FLOOR * 10);
+            // BLITZKRIEG strat
+            //
+            console.log("BLITZKRIEG");
+            if (try_finish_right_now(monaco, state)) return;
+
+            buy_accel_at_max(monaco, state, ACCEL_FLOOR * ACCEL_BLITZKRIEG_MUL);
+
+            // TODO
+            // priority 1, buy a shell or supershell if we're not first, and if the first is not shielded
+            // priority 2, if we're close and with good speed, buy shields
+            // priority 3, if we're first, buy speed or price gauge shells
         }
 
         //
         // take actions
         //
-        if (state.new_speed > 0) monaco.buyAcceleration(state.new_speed);
+        console.log("worked");
         console.log("gasleft:", gasleft());
     }
 
@@ -136,38 +185,31 @@ contract Bradbury is ICar {
         return false;
     }
 
-    function buy_accel_cheap(Monaco monaco, TurnState memory state) internal {
-        uint256 new_speed = 0;
-        uint256 cost = 0;
-        while (new_speed < 10) {
-            uint256 new_cost = monaco.getAccelerateCost(new_speed + 1);
-            if (new_cost > state.balance || new_cost > ACCEL_FLOOR * (new_speed + 1)) {
-                break;
-            }
-            cost = new_cost;
-            new_speed += 1;
-        }
-
-        state.new_speed = new_speed;
-        state.new_cost = cost;
-    }
-
-    function buy_accel_at_premium(Monaco monaco, Monaco.CarData memory self, uint256 max_units, uint256 max_unit_cost)
-        internal
-    {
+    function buy_accel_at_max(Monaco monaco, TurnState memory state, uint256 max_unit_cost) internal {
         while (true) {
-            if (max_units == 0) return;
             uint256 cost = monaco.getAccelerateCost(1);
-            if (cost > self.balance || cost > max_unit_cost) {
+            if (cost > state.balance || cost > max_unit_cost) {
                 return;
             }
-            console.log("buying for ", cost);
             monaco.buyAcceleration(1);
-            self.speed += 1;
-            self.balance -= cost.safeCastTo32();
-            max_units -= 1;
+            state.speed += 1;
+            state.balance -= cost.safeCastTo32();
         }
     }
+
+    // function buy_accel_with_budget(Monaco monaco, TurnState memory state, uint256 max, uint256 budget) internal {
+    //     while (max > 0) {
+    //         max--;
+    //         uint256 cost = monaco.getAccelerateCost(1);
+    //         if (cost > budget) {
+    //             return;
+    //         }
+    //         budget -= cost;
+    //         monaco.buyAcceleration(1);
+    //         state.speed = +1;
+    //         state.balance -= cost;
+    //     }
+    // }
 
     function sayMyName() external pure returns (string memory) {
         return "Bradbury";
