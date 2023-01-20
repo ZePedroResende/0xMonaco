@@ -57,6 +57,7 @@ contract Bradbury is ICar {
         uint256[] calldata bananas,
         uint256 self_index
     ) external {
+        console.log("\nplayer", self_index);
         //
         // setup vars
         //
@@ -106,17 +107,17 @@ contract Bradbury is ICar {
 
             // try and spend 70% of our per-turn budget
             // leave some overhead for blitzkrieg
-            state.targetSpend = state.initialBalance / state.remainingTurns * 7 / 10;
+            state.targetSpend = state.initialBalance / state.remainingTurns * 15 / 10;
         } else {
             // we're in 2nd or 3rd, lag behind the next car
             strat = Strat.LAG;
             front_car = allCars[self_index - 1];
 
-            state.targetSpend = state.initialBalance / state.remainingTurns * 7 / 10;
+            state.targetSpend = state.initialBalance / state.remainingTurns * 15 / 10;
         }
 
         // priority: try to sweep floor on acceleration
-        buy_accel_at_max(monaco, state, ACCEL_FLOOR);
+        buy_accel_at_max(monaco, state, ACCEL_FLOOR * 2);
 
         if (strat == Strat.LAG) {
             //
@@ -129,14 +130,19 @@ contract Bradbury is ICar {
 
             // if is accel expensive, and next guy is too fast or too far in front?
             if (monaco.getAccelerateCost(1) > ACCEL_FLOOR * 3) {
-                if ((front_car.speed > self.speed + 8 || other_next_pos > self_next_pos + 50)) {
+                if ((front_car.speed > self.speed + 8 || (front_car.speed > 1 && other_next_pos > self_next_pos + 50)))
+                {
                     // nuke 'em hard
-                    maybe_buy_any_shell_kind(monaco, state, SHELL_FLOOR * 4);
-                } else if ((front_car.speed > self.speed + 2 || other_next_pos > self_next_pos + 20)) {
+                    maybe_buy_any_shell_kind(monaco, state, SHELL_FLOOR * 5);
+                } else if (
+                    (front_car.speed > self.speed + 2 || (front_car.speed > 1 && other_next_pos > self_next_pos + 20))
+                ) {
                     // nuke 'em, but not so hard
-                    maybe_buy_any_shell_kind(monaco, state, SHELL_FLOOR * 2);
+                    maybe_buy_any_shell_kind(monaco, state, SHELL_FLOOR * 3);
                 }
             }
+
+            // TODO do we want to check our budget here?
 
             // if we're in second and we have speed?
             if (self_index == 1 && self.speed > 10) {
@@ -147,24 +153,19 @@ contract Bradbury is ICar {
                 if (bought == 0) {
                     maybe_buy_shield(monaco, state);
                 }
+                aggressive_shell_gauging(monaco, state);
             }
-
-            uint256 spent = state.initialBalance - self.balance;
-            if (state.targetSpend > spent) {
-                buy_accel_with_budget(monaco, state, state.targetSpend - spent);
-            }
-            // spend the remaining budget on accel, even if expensive?
         } else if (strat == Strat.HODL) {
             //
             // HODL strat
             //
             console.log("HODL");
 
+            maybe_banana(monaco, state);
+            aggressive_shell_gauging(monaco, state);
             // get the cost of banana, save that money
             // aggresive gouging of shells & super shells up to floor * 2
             // buy a banana, *after the shells*
-
-            // buy_accel_at_max(monaco, state, ACCEL_FLOOR * ACCEL_HODL_MUL);
         } else {
             //
             // BLITZKRIEG strat
@@ -180,8 +181,7 @@ contract Bradbury is ICar {
             // priority 3, if we're first, buy speed or price gauge shells
         }
 
-        console.log("worked");
-        console.log("gasleft:", gasleft());
+        accel_with_remaining_budget_for_turn(monaco, state);
     }
 
     //
@@ -256,6 +256,7 @@ contract Bradbury is ICar {
             if (cost > budget) {
                 return;
             }
+            console.log("1 speed");
             monaco.buyAcceleration(1);
             budget -= cost;
             state.speed += 1;
@@ -263,19 +264,40 @@ contract Bradbury is ICar {
         }
     }
 
-    // function buy_accel_with_budget(Monaco monaco, TurnState memory state, uint256 max, uint256 budget) internal {
-    //     while (max > 0) {
-    //         max--;
-    //         uint256 cost = monaco.getAccelerateCost(1);
-    //         if (cost > budget) {
-    //             return;
-    //         }
-    //         budget -= cost;
-    //         monaco.buyAcceleration(1);
-    //         state.speed = +1;
-    //         state.balance -= cost;
-    //     }
-    // }
+    function accel_with_remaining_budget_for_turn(Monaco monaco, TurnState memory state) internal {
+        uint256 spent = state.initialBalance - state.balance;
+        console.log("extra budget: buy speed");
+        if (state.targetSpend > spent) {
+            buy_accel_with_budget(monaco, state, state.targetSpend - spent);
+        }
+    }
+
+    function aggressive_shell_gauging(Monaco monaco, TurnState memory state) internal {
+        uint256 budget = state.initialBalance - state.balance;
+
+        console.log("Starting aggressive shell gauge");
+        console.log("budget", budget);
+        while (true) {
+            uint256 shellPrice = monaco.getShellCost(1);
+            uint256 superShellPrice = monaco.getSuperShellCost(1);
+
+            if (shellPrice < superShellPrice && shellPrice <= budget && shellPrice < SHELL_FLOOR * 2) {
+                console.log("price gauge shell");
+                monaco.buyShell(1);
+                budget -= shellPrice;
+                state.balance -= shellPrice;
+            } else if (superShellPrice <= shellPrice && superShellPrice <= budget && superShellPrice < SHELL_FLOOR * 2)
+            {
+                console.log("price gauge super shell");
+                monaco.buySuperShell(1);
+                budget -= superShellPrice;
+                state.balance -= superShellPrice;
+            } else {
+                console.log("gauging done");
+                break;
+            }
+        }
+    }
 
     function sayMyName() external pure returns (string memory) {
         return "Bradbury";

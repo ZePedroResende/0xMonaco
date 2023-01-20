@@ -136,7 +136,11 @@ contract MonacoTest is Test {
                             ", sh=",
                             vm.toString(car.shield),
                             ", accel_cost=",
-                            vm.toString(monaco.getAccelerateCost(1))
+                            vm.toString(monaco.getAccelerateCost(1)),
+                            ", shell=",
+                            vm.toString(monaco.getShellCost(1)),
+                            ", super=",
+                            vm.toString(monaco.getSuperShellCost(1))
                         )
                     );
                 }
