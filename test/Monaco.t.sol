@@ -49,9 +49,9 @@ contract MonacoTest is Test {
     }
 
     function testGames() public {
-        ICar w1 = new Sauce();
+        ICar w1 = new Bradbury();
         ICar w2 = new Bradbury();
-        ICar w3 = new Floor();
+        ICar w3 = new Bradbury();
         names[w1] = "      Sauce";
         names[w2] = "   Bradbury";
         names[w3] = "      Floor";
