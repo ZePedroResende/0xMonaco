@@ -320,7 +320,7 @@ contract BradburyLagSpeedBlitzSpeed is ICar {
     }
 
     function aggressive_shell_gouging(Monaco monaco, TurnState memory state) internal {
-        uint256 budget = state.initialBalance - state.balance;
+        uint256 budget = state.balance;
 
         while (true) {
             uint256 shellPrice = monaco.getShellCost(1);

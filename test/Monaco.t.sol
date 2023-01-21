@@ -18,6 +18,7 @@ import {BradburyBigAccelFloor} from "../src/cars/B_biggerAccelFloor.sol";
 import {BradburyBiggerEndBudget} from "../src/cars/B_biggerEndBudget.sol";
 import {BradburyGoBananas} from "../src/cars/B_goBananas.sol";
 import {BradburySpeedInBlitz} from "../src/cars/B_moreSpeedInBlitz.sol";
+import {BradburyEvenBiggerAccelFloor} from "../src/cars/B_evenBiggerAccelFloor.sol";
 
 uint256 constant CAR_LEN = 3;
 uint256 constant ABILITY_LEN = 5;
@@ -53,12 +54,12 @@ contract MonacoTest is Test {
     }
 
     function testGames() public {
-        ICar w3 = new BradburyBigAccelFloor();
-        ICar w2 = new BradburyBigAccelFloor();
-        ICar w1 = new BradburyBiggerEndBudget();
+        ICar w1 = new BradburyBigAccelFloor();
+        ICar w2 = new BradburyBiggerEndBudget();
+        ICar w3 = new BradburyEvenBiggerAccelFloor();
         names[w1] = " BigAccelFloor";
-        names[w3] = " BigAccelFloor";
         names[w2] = "BiggerEndBudget";
+        names[w3] = " EvenBiggerAccelFloor";
 
         monaco.register(w1);
         monaco.register(w2);
