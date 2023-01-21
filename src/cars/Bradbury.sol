@@ -212,7 +212,6 @@ contract Bradbury is ICar {
             uint256 needed = remainingDist - state.speed;
             try monaco.getAccelerateCost(needed) returns (uint256 cost) {
                 if (cost <= state.balance) {
-                    console.log("here");
                     monaco.buyAcceleration(needed);
                     return true;
                 }
