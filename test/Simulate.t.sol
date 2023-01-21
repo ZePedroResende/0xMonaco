@@ -15,7 +15,7 @@ contract SimulateTest is Test {
     function setUp() public {}
 
     function testSimulation() public {
-        string[] memory input = new string[](6);
+        string[] memory input = new string[](9);
 
         //  input[0] = "PermaShield.sol";
         //  input[2] = "Floor.sol";
@@ -26,6 +26,9 @@ contract SimulateTest is Test {
         input[3] = "B_moreSpeedInBlitz.sol:BradburySpeedInBlitz";
         input[4] = "Bradbury.sol:Bradbury";
         input[5] = "B_smallerEndBudget.sol:BradburySmallerEndBudget";
+        input[6] = "B_evenBiggerAccelFloor.sol:BradburyEvenBiggerAccelFloor";
+        input[7] = "BiggerBetterBradbury.sol:BiggerBetterBradbury ";
+        input[8] = "B_lagSpeed_blitzSpeed.sol:BradburyLagSpeedBlitzSpeed ";
         //        input[6] = "ExampleCar.sol";
         //        input[7] = "Saucepoint.sol:Sauce";
 
@@ -43,6 +46,12 @@ contract SimulateTest is Test {
                 input[4],
                 ",",
                 input[5], //",",
+                ",",
+                input[6], //",",
+                ",",
+                input[7], //",",
+                ",",
+                input[8], //",",
                 //input[6], ",",
                 //input[7],
                 "\n"
@@ -52,6 +61,7 @@ contract SimulateTest is Test {
         for (uint256 i = 0; i < input.length; i++) {
             for (uint256 j = 0; j < input.length; j++) {
                 for (uint256 k = 0; k < input.length; k++) {
+if (i != j && i != k && j != k) {
                     console.log(string.concat(vm.toString(i), ",", vm.toString(j), ",", vm.toString(k), "\n"));
                     uint256 snapshot = vm.snapshot();
 
@@ -113,6 +123,7 @@ contract SimulateTest is Test {
                     vm.writeLine("simulations/simulation.simulation", "-----");
 
                     vm.revertTo(snapshot);
+                }
                 }
             }
         }
