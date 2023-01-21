@@ -14,6 +14,9 @@ import {Sauce} from "../src/cars/samples/Saucepoint.sol";
 import {MadCar} from "../src/cars/samples/MadCar.sol";
 import {Floor} from "../src/cars/samples/Floor.sol";
 import {Bradbury} from "../src/cars/Bradbury.sol";
+import {BradburyBigAccelFloor} from "../src/cars/B_biggerAccelFloor.sol";
+import {BradburyBiggerEndBudget} from "../src/cars/B_biggerEndBudget.sol";
+import {BradburyGoBananas} from "../src/cars/B_goBananas.sol";
 
 uint256 constant CAR_LEN = 3;
 uint256 constant ABILITY_LEN = 5;
@@ -49,12 +52,12 @@ contract MonacoTest is Test {
     }
 
     function testGames() public {
-        ICar w1 = new Bradbury();
-        ICar w2 = new Bradbury();
-        ICar w3 = new Bradbury();
-        names[w1] = "      Sauce";
-        names[w2] = "   Bradbury";
-        names[w3] = "      Floor";
+        ICar w1 = new BradburyGoBananas();
+        ICar w2 = new BradburyBiggerEndBudget();
+        ICar w3 = new BradburyBigAccelFloor();
+        names[w1] = "      Bananas";
+        names[w2] = " BigEndBudget";
+        names[w3] = "BigAccelFloor";
 
         monaco.register(w1);
         monaco.register(w2);

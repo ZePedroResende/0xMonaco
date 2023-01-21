@@ -71,11 +71,10 @@ contract Bradbury is ICar {
             speed: self.speed,
             y: self.y,
             pctLeft: self.balance * 100 / INITIAL_BALANCE,
-            remainingTurns: self.speed > 0 ? (1000 - self.y) / self.speed : 1000,
+            remainingTurns: 0,
             targetSpend: 0
         });
         Strat strat = Strat.LAG;
-        if (state.remainingTurns == 0) state.remainingTurns = 1;
 
         //
         // first move
@@ -97,6 +96,8 @@ contract Bradbury is ICar {
             strat = Strat.BLITZKRIEG;
 
             // we spend 100% of our budget per turn
+            state.remainingTurns = self.speed > 0 ? (1000 - self.y) / self.speed : 1000;
+            if (state.remainingTurns == 0) state.remainingTurns = 1;
             state.targetSpend = state.initialBalance / state.remainingTurns;
         } else if (self_index == 0) {
             // we're in 1st, try to hold our position
@@ -105,6 +106,7 @@ contract Bradbury is ICar {
             // try and spend 70% of our per-turn budget
             // leave some overhead for blitzkrieg
             state.remainingTurns = self.speed > 0 ? (800 - self.y) / self.speed : 800;
+            if (state.remainingTurns == 0) state.remainingTurns = 1;
             state.targetSpend = state.initialBalance / state.remainingTurns * 9 / 10;
         } else {
             // we're in 2nd or 3rd, lag behind the next car
@@ -112,6 +114,7 @@ contract Bradbury is ICar {
             front_car = allCars[self_index - 1];
 
             state.remainingTurns = self.speed > 0 ? (800 - self.y) / self.speed : 800;
+            if (state.remainingTurns == 0) state.remainingTurns = 1;
             state.targetSpend = state.initialBalance / state.remainingTurns * 9 / 10;
         }
 
