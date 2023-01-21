@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.17;
 
+import "forge-std/console.sol";
 import "./interfaces/ICar.sol";
 import "./utils/SignedWadMath.sol";
 
@@ -190,7 +191,12 @@ contract Monaco {
                 currentCar = currentTurnCar; // Set the current car temporarily.
 
                 // Call the car to have it take its turn with a max of 2 million gas, and catch any errors that occur.
-                try currentTurnCar.takeYourTurn{gas: 2_000_000}(this, allCarData, bananas, yourCarIndex) {} catch {}
+                // currentTurnCar.takeYourTurn{gas: 2_000_000}(this, allCarData, bananas, yourCarIndex);
+                console.log("address", address(currentTurnCar));
+                try currentTurnCar.takeYourTurn{gas: 2_000_000}(this, allCarData, bananas, yourCarIndex) {}
+                catch {
+                    console.log("failed");
+                }
 
                 delete currentCar; // Restore the current car to the zero address.
 
@@ -322,7 +328,10 @@ contract Monaco {
 
             // Check for banana collisions
             uint256 len = bananas.length;
+            console.log(len);
             for (uint256 i = 0; i < len; ++i) {
+                console.log("here");
+                if (bananas.length <= i - 1) break;
                 if (bananas[i] <= y) continue; // skip bananas that are behind us
                 if (bananas[i] > y + distanceFromClosestCar) break; // we hit the closest car first, we can exit
                 // Remove the banana by swapping it with the last and decreasing the size

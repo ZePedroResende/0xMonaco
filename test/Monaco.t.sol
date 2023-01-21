@@ -13,6 +13,7 @@ import {PermaShield} from "../src/cars/samples/PermaShield.sol";
 import {Sauce} from "../src/cars/samples/Saucepoint.sol";
 import {MadCar} from "../src/cars/samples/MadCar.sol";
 import {Floor} from "../src/cars/samples/Floor.sol";
+import {Bradbury} from "../src/cars/Bradbury.sol";
 
 uint256 constant CAR_LEN = 3;
 uint256 constant ABILITY_LEN = 5;
@@ -48,11 +49,11 @@ contract MonacoTest is Test {
     }
 
     function testGames() public {
-        ICar w1 = new PermaShield();
-        ICar w2 = new Sauce();
-        ICar w3 = new Floor();
-        names[w1] = "PermaShield";
-        names[w2] = "      Sauce";
+        ICar w1 = new Bradbury();
+        ICar w2 = new Bradbury();
+        ICar w3 = new Bradbury();
+        names[w1] = "      Sauce";
+        names[w2] = "   Bradbury";
         names[w3] = "      Floor";
 
         monaco.register(w1);
@@ -105,6 +106,9 @@ contract MonacoTest is Test {
 
             Monaco.CarData[] memory allCarData = monaco.getAllCarData();
 
+            if (monaco.turns() % 3 == 0) {
+                console.log("\nTurn", monaco.turns() - 1);
+            }
             for (uint256 i = 0; i < allCarData.length; i++) {
                 Monaco.CarData memory car = allCarData[i];
 
@@ -119,25 +123,27 @@ contract MonacoTest is Test {
                     currentTurn.bought[abilityIdx] = monaco.getActionsSold(Monaco.ActionType(abilityIdx));
                 }
 
-                if (lastTurn < monaco.turns()) {
-                    lastTurn = monaco.turns();
-                    console.log("");
+                if (monaco.turns() % 3 == 0) {
+                    console.log(
+                        string.concat(
+                            names[car.car],
+                            " ",
+                            paddedInt(car.y),
+                            ": bal=",
+                            paddedInt(car.balance),
+                            ", sp=",
+                            vm.toString(car.speed),
+                            ", sh=",
+                            vm.toString(car.shield),
+                            ", accel_cost=",
+                            vm.toString(monaco.getAccelerateCost(1)),
+                            ", shell=",
+                            vm.toString(monaco.getShellCost(1)),
+                            ", super=",
+                            vm.toString(monaco.getSuperShellCost(1))
+                        )
+                    );
                 }
-                console.log(
-                    string.concat(
-                        vm.toString(monaco.turns() - 1),
-                        "  ",
-                        names[car.car],
-                        " ",
-                        vm.toString(car.y),
-                        ": bal=",
-                        vm.toString(car.balance),
-                        ", sp=",
-                        vm.toString(car.speed),
-                        ", sh=",
-                        vm.toString(car.shield)
-                    )
-                );
                 // emit log_address(address(car.car));
                 // emit log_named_uint("balance", car.balance);
                 // emit log_named_uint("speed", car.speed);
@@ -198,13 +204,29 @@ contract MonacoTest is Test {
         // Close the json file
         vm.writeLine("logs/gameLog.json", "]}");
         emit log_named_uint("Number Of Turns", monaco.turns());
-        console.log("\nWinner:");
-        emit log_named_address(names[monaco.getAllCarData()[0].car], address(monaco.getAllCarData()[0].car));
 
-        console.log("\nAll cars:");
-        emit log_named_address(names[w1], address(w1));
-        emit log_named_address(names[w2], address(w2));
-        emit log_named_address(names[w3], address(w3));
+        console.log("\nAll rankings:");
+        ICar car0 = monaco.getAllCarData()[0].car;
+        ICar car1 = monaco.getAllCarData()[1].car;
+        ICar car2 = monaco.getAllCarData()[2].car;
+
+        emit log_named_address(names[car0], address(car0));
+        emit log_named_address(names[car1], address(car1));
+        emit log_named_address(names[car2], address(car2));
+    }
+
+    function paddedInt(uint256 n) private returns (string memory) {
+        if (n > 10000) {
+            return vm.toString(n);
+        } else if (n >= 1000) {
+            return string.concat(" ", vm.toString(n));
+        } else if (n >= 100) {
+            return string.concat("  ", vm.toString(n));
+        } else if (n >= 10) {
+            return string.concat("   ", vm.toString(n));
+        } else {
+            return string.concat("    ", vm.toString(n));
+        }
     }
 
     /*//////////////////////////////////////////////////////////////
