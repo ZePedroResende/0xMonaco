@@ -15,22 +15,38 @@ contract SimulateTest is Test {
     function setUp() public {}
 
     function testSimulation() public {
-        string[] memory input = new string[](4);
+        string[] memory input = new string[](6);
 
-        input[0] = "PermaShield.sol";
-        input[1] = "Saucepoint.sol:Sauce";
-        input[2] = "Floor.sol";
-        input[3] = "ThePackage.sol";
-
+      //  input[0] = "PermaShield.sol";
+      //  input[2] = "Floor.sol";
+      //  input[3] = "ThePackage.sol";
+        input[0] = "B_biggerAccelFloor.sol:Bradbury";
+        input[1] = "B_biggerEndBudget.sol:Bradbury";
+        input[2] = "B_goBananas.sol:Bradbury";
+        input[3] = "B_moreSpeedInBlitz.sol:Bradbury";
+        input[4] = "Bradbury.sol:Bradbury";
+        input[5] = "B_smallerEndBudget.sol:Bradbury";
+//        input[6] = "ExampleCar.sol";
+//        input[7] = "Saucepoint.sol:Sauce";
 
         vm.writeFile(
             string.concat("simulations/", "simulation", ".simulation"),
-            string.concat(input[0], ",", input[1], ",",input[2], ",",input[3],"\n"));
+            string.concat(
+                input[0], ",", 
+                input[1], ",",
+                input[2], ",", 
+                input[3], ",", 
+                input[4], ",", 
+                input[5], //",", 
+                //input[6], ",", 
+                //input[7],
+                          "\n"));
 
         for (uint i = 0; i < input.length; i++) {
             for (uint j = 0; j < input.length; j++) {
                 for (uint k = 0; k < input.length; k++) {
                     if (i != j && i != k && j != k) {
+                        console.log(string.concat(vm.toString(i), ",",vm.toString(j), ",",vm.toString(k), "\n"));
                         uint256 snapshot = vm.snapshot();
 
                         monaco = new Monaco();
@@ -55,8 +71,8 @@ contract SimulateTest is Test {
                         carToIndex[2] = k;
 
 
-                        for (uint i = 0; i < 3; i++) {
-                            monaco.register(ICar(cars[i]));
+                        for (uint p = 0; p < 3; p++) {
+                            monaco.register(ICar(cars[p]));
                         }
 
                         uint256 lastTurn = 1;
@@ -67,8 +83,19 @@ contract SimulateTest is Test {
                         Monaco.CarData[] memory allCarData = monaco
                             .getAllCarData();
 
-                        for (uint256 i = 0; i < allCarData.length; i++) {
-                            Monaco.CarData memory car = allCarData[i];
+                            vm.writeLine(
+                                "simulations/simulation.simulation",
+                                string.concat(
+                                    vm.toString(carToIndex[0]),
+                                    ",",
+                                    vm.toString(carToIndex[1]),
+                                    ",",
+                                    vm.toString(carToIndex[2]),
+                                    "\n"
+                                )
+                            );
+                        for (uint256 p = 0; p < allCarData.length; p++) {
+                            Monaco.CarData memory car = allCarData[p];
 
                             // Add car data to the current turn
                             uint256 carIndex = getCarIndex(
@@ -120,3 +147,5 @@ contract SimulateTest is Test {
         vm.etch(targetAddr, deployed.code);
     }
 }
+
+
