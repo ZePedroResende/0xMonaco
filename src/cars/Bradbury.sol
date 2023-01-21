@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.17;
 
+import "forge-std/console.sol";
 import "./../interfaces/ICar.sol";
 import "solmate/utils/SafeCastLib.sol";
 
@@ -76,17 +77,10 @@ contract Bradbury is ICar {
         });
         Strat strat = Strat.LAG;
 
-        //
-        // first move
-        // inspired by https://gist.github.com/xBA5ED/2459807a536e3dbc9d933713245c30ff
-        //
-        if (state.y == 0) {
-            // first turn
-            if (monaco.getAccelerateCost(1) <= INIT_ACCEL_COST) {
-                // we're the first car
-                state.balance -= monaco.buyAcceleration(11);
-                state.speed += 11;
-            }
+        if (monaco.turns() == 1) {
+            // we have 1st move advantage
+            state.balance -= monaco.buyAcceleration(11);
+            state.speed += 11;
         }
 
         // define more state depending on race stage
@@ -218,6 +212,7 @@ contract Bradbury is ICar {
             uint256 needed = remainingDist - state.speed;
             try monaco.getAccelerateCost(needed) returns (uint256 cost) {
                 if (cost <= state.balance) {
+                    console.log("here");
                     monaco.buyAcceleration(needed);
                     return true;
                 }
@@ -287,7 +282,7 @@ contract Bradbury is ICar {
     function maybe_banana(Monaco monaco, TurnState memory state, uint256 price) internal returns (uint256 count) {
         uint256 cost = monaco.getBananaCost();
 
-        if (cost <= price) {
+        if (cost <= price && state.balance >= cost) {
             monaco.buyBanana();
             state.balance -= cost;
             return 1;
@@ -298,7 +293,7 @@ contract Bradbury is ICar {
     function maybe_buy_shield(Monaco monaco, TurnState memory state, uint256 max_shields, uint256 price) internal {
         uint256 cost = monaco.getShieldCost(1);
 
-        if (cost <= price) {
+        if (cost <= price && state.balance >= cost) {
             monaco.buyShield(1);
             state.balance -= cost;
         }
@@ -307,7 +302,7 @@ contract Bradbury is ICar {
     function buy_accel_with_budget(Monaco monaco, TurnState memory state, uint256 budget) internal {
         while (true) {
             uint256 cost = monaco.getAccelerateCost(1);
-            if (cost > budget) {
+            if (cost > budget || state.balance < cost) {
                 return;
             }
             monaco.buyAcceleration(1);

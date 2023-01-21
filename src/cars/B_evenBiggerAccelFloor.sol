@@ -4,7 +4,7 @@ pragma solidity 0.8.17;
 import "./../interfaces/ICar.sol";
 import "solmate/utils/SafeCastLib.sol";
 
-contract BradburyBigAccelFloor is ICar {
+contract BradburyEvenBiggerAccelFloor is ICar {
     using SafeCastLib for uint256;
 
     uint256 internal constant LATE_GAME = 600;
@@ -113,7 +113,7 @@ contract BradburyBigAccelFloor is ICar {
 
         // priority: try to sweep floor on acceleration
         // TODO adjust this value
-        buy_accel_at_max(monaco, state, ACCEL_FLOOR * 5);
+        buy_accel_at_max(monaco, state, ACCEL_FLOOR * 6);
 
         if (strat == Strat.LAG) {
             //
@@ -356,6 +356,6 @@ contract BradburyBigAccelFloor is ICar {
     }
 
     function sayMyName() external pure returns (string memory) {
-        return "Bradbury_biggerAccelFloor";
+        return "Bradbury_evenBiggerAccelFloor";
     }
 }

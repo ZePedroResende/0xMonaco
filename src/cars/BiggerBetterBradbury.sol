@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.17;
 
+import "forge-std/console.sol";
 import "./../interfaces/ICar.sol";
 import "solmate/utils/SafeCastLib.sol";
 
-contract BradburyBigAccelFloor is ICar {
+contract BiggerBetterBradbury is ICar {
     using SafeCastLib for uint256;
 
     uint256 internal constant LATE_GAME = 600;
@@ -100,7 +101,7 @@ contract BradburyBigAccelFloor is ICar {
             // leave some overhead for blitzkrieg
             state.remainingTurns = self.speed > 0 ? (800 - self.y) / self.speed : 800;
             if (state.remainingTurns == 0) state.remainingTurns = 1;
-            state.targetSpend = state.initialBalance / state.remainingTurns * 9 / 10;
+            state.targetSpend = state.initialBalance / state.remainingTurns * 8 / 10;
         } else {
             // we're in 2nd or 3rd, lag behind the next car
             strat = Strat.LAG;
@@ -108,17 +109,19 @@ contract BradburyBigAccelFloor is ICar {
 
             state.remainingTurns = self.speed > 0 ? (800 - self.y) / self.speed : 800;
             if (state.remainingTurns == 0) state.remainingTurns = 1;
-            state.targetSpend = state.initialBalance / state.remainingTurns * 9 / 10;
+            state.targetSpend = state.initialBalance / state.remainingTurns * 8 / 10;
         }
 
         // priority: try to sweep floor on acceleration
         // TODO adjust this value
-        buy_accel_at_max(monaco, state, ACCEL_FLOOR * 5);
+        buy_accel_at_max(monaco, state, ACCEL_FLOOR * 2);
 
         if (strat == Strat.LAG) {
             //
             // LAG strat
             //
+            buy_accel_at_max(monaco, state, ACCEL_FLOOR * 6);
+
             uint256 self_next_pos = self.y + self.speed;
             uint256 other_next_pos = front_car.y + front_car.speed;
 
@@ -356,6 +359,6 @@ contract BradburyBigAccelFloor is ICar {
     }
 
     function sayMyName() external pure returns (string memory) {
-        return "Bradbury_biggerAccelFloor";
+        return "BiggerBetterBradbury";
     }
 }

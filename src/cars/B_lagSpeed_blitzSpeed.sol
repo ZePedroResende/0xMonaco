@@ -4,7 +4,7 @@ pragma solidity 0.8.17;
 import "./../interfaces/ICar.sol";
 import "solmate/utils/SafeCastLib.sol";
 
-contract BradburyBigAccelFloor is ICar {
+contract BradburyLagSpeedBlitzSpeed is ICar {
     using SafeCastLib for uint256;
 
     uint256 internal constant LATE_GAME = 600;
@@ -113,7 +113,7 @@ contract BradburyBigAccelFloor is ICar {
 
         // priority: try to sweep floor on acceleration
         // TODO adjust this value
-        buy_accel_at_max(monaco, state, ACCEL_FLOOR * 5);
+        buy_accel_at_max(monaco, state, ACCEL_FLOOR * 2);
 
         if (strat == Strat.LAG) {
             //
@@ -121,6 +121,8 @@ contract BradburyBigAccelFloor is ICar {
             //
             uint256 self_next_pos = self.y + self.speed;
             uint256 other_next_pos = front_car.y + front_car.speed;
+
+            buy_accel_at_max(monaco, state, ACCEL_FLOOR * 6);
 
             // if is accel expensive, and next guy is too fast or too far in front?
             // TODO tweak this value?
@@ -194,8 +196,8 @@ contract BradburyBigAccelFloor is ICar {
             }
 
             // try to maintain some speed if we're slow
-            if (self.speed < 10) {
-                buy_accel_at_max(monaco, state, ACCEL_FLOOR * 3);
+            if (self.speed < 20) {
+                buy_accel_at_max(monaco, state, ACCEL_FLOOR * 5);
             }
         }
 
@@ -356,6 +358,6 @@ contract BradburyBigAccelFloor is ICar {
     }
 
     function sayMyName() external pure returns (string memory) {
-        return "Bradbury_biggerAccelFloor";
+        return "Bradbury_LagSpeedBlitzSpeed";
     }
 }

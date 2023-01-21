@@ -17,6 +17,7 @@ import {Bradbury} from "../src/cars/Bradbury.sol";
 import {BradburyBigAccelFloor} from "../src/cars/B_biggerAccelFloor.sol";
 import {BradburyBiggerEndBudget} from "../src/cars/B_biggerEndBudget.sol";
 import {BradburyGoBananas} from "../src/cars/B_goBananas.sol";
+import {BradburySpeedInBlitz} from "../src/cars/B_moreSpeedInBlitz.sol";
 
 uint256 constant CAR_LEN = 3;
 uint256 constant ABILITY_LEN = 5;
@@ -52,12 +53,12 @@ contract MonacoTest is Test {
     }
 
     function testGames() public {
-        ICar w1 = new BradburyGoBananas();
-        ICar w2 = new BradburyBiggerEndBudget();
         ICar w3 = new BradburyBigAccelFloor();
-        names[w1] = "      Bananas";
-        names[w2] = " BigEndBudget";
-        names[w3] = "BigAccelFloor";
+        ICar w2 = new BradburyBigAccelFloor();
+        ICar w1 = new BradburyBiggerEndBudget();
+        names[w1] = " BigAccelFloor";
+        names[w3] = " BigAccelFloor";
+        names[w2] = "BiggerEndBudget";
 
         monaco.register(w1);
         monaco.register(w2);
@@ -129,7 +130,7 @@ contract MonacoTest is Test {
                 if (monaco.turns() % 3 == 0) {
                     console.log(
                         string.concat(
-                            names[car.car],
+                            car.car.sayMyName(),
                             " ",
                             paddedInt(car.y),
                             ": bal=",
