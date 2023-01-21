@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.17;
 
-import "forge-std/console.sol";
 import "./../interfaces/ICar.sol";
 import "solmate/utils/SafeCastLib.sol";
 
@@ -57,15 +56,13 @@ contract Bradbury is ICar {
         uint256[] calldata bananas,
         uint256 self_index
     ) external {
-        console.log("\nplayer", self_index);
         //
         // setup vars
         //
         Monaco.CarData memory self = allCars[self_index];
         Monaco.CarData memory front_car;
         if (self_index > 0) front_car = allCars[self_index - 1];
-        Monaco.CarData memory backCar;
-        if (self_index < 2) backCar = allCars[self_index + 1];
+        Monaco.CarData memory back_car;
 
         TurnState memory state = TurnState({
             leading: self_index == 0,
@@ -119,52 +116,51 @@ contract Bradbury is ICar {
         }
 
         // priority: try to sweep floor on acceleration
+        // TODO adjust this value
         buy_accel_at_max(monaco, state, ACCEL_FLOOR * 2);
 
         if (strat == Strat.LAG) {
             //
             // LAG strat
             //
-            console.log("LAG");
-
             uint256 self_next_pos = self.y + self.speed;
             uint256 other_next_pos = front_car.y + front_car.speed;
 
             // if is accel expensive, and next guy is too fast or too far in front?
+            // TODO tweak this value?
             if (monaco.getAccelerateCost(1) > ACCEL_FLOOR * 3) {
                 if ((front_car.speed > self.speed + 8 || (front_car.speed > 1 && other_next_pos > self_next_pos + 50)))
                 {
                     // nuke 'em hard
-                    maybe_buy_any_shell_kind(monaco, state, SHELL_FLOOR * 5);
+                    maybe_buy_any_shell_kind(monaco, state, SHELL_FLOOR * 5, front_car);
                 } else if (
                     (front_car.speed > self.speed + 2 || (front_car.speed > 1 && other_next_pos > self_next_pos + 20))
                 ) {
                     // nuke 'em, but not so hard
-                    maybe_buy_any_shell_kind(monaco, state, SHELL_FLOOR * 3);
+                    maybe_buy_any_shell_kind(monaco, state, SHELL_FLOOR * 3, front_car);
                 }
             }
 
             // TODO do we want to check our budget here?
 
             // if we're in second and we have speed?
+            // TODO tweak this value
             if (self_index == 1 && self.speed > 10) {
                 //   2nd and is a banana worth it? maybe buy one?
                 //   if no banana, is a shield VERY cheap? maybe buy one?
-                uint256 bought = maybe_banana(monaco, state);
+                uint256 bought = maybe_banana(monaco, state, BANANA_FLOOR * 12 / 10);
 
                 if (bought == 0) {
-                    maybe_buy_shield(monaco, state);
+                    maybe_buy_shield(monaco, state, 1, SHIELD_FLOOR / 2);
                 }
-                aggressive_shell_gauging(monaco, state);
+                aggressive_shell_gouging(monaco, state);
             }
         } else if (strat == Strat.HODL) {
             //
             // HODL strat
             //
-            console.log("HODL");
-
-            maybe_banana(monaco, state);
-            aggressive_shell_gauging(monaco, state);
+            maybe_banana(monaco, state, BANANA_FLOOR * 12 / 10);
+            aggressive_shell_gouging(monaco, state);
             // get the cost of banana, save that money
             // aggresive gouging of shells & super shells up to floor * 2
             // buy a banana, *after the shells*
@@ -172,15 +168,39 @@ contract Bradbury is ICar {
             //
             // BLITZKRIEG strat
             //
-            console.log("BLITZKRIEG");
             if (try_finish_right_now(monaco, state)) return;
 
             // buy_accel_at_max(monaco, state, ACCEL_FLOOR * ACCEL_BLITZKRIEG_MUL);
 
             // TODO
-            // priority 1, buy a shell or supershell if we're not first, and if the first is not shielded
-            // priority 2, if we're close and with good speed, buy bananas or shields (whichever is cheapest)
-            // priority 3, if we're first, buy speed or price gauge shells
+            if (self_index != 0) {
+                // priority 1, buy a shell or supershell if we're not first, and if the first is not shielded
+                maybe_buy_any_shell_kind(monaco, state, SHELL_FLOOR * 5, front_car);
+            }
+
+            uint256 shields_needed = compute_shields_needed(monaco, self_index, allCars, back_car);
+
+            // if we're 1st, we skip the condition "if we're close to the front car"
+            uint256 distance_to_front_car = type(uint256).max;
+            if (front_car.y > self.y) {
+                distance_to_front_car = front_car.y - self.y;
+            }
+
+            // if we can finish in the next 3 rounds, invest in a shield
+            if (self.y + self.speed * 3 >= 1000) {
+                maybe_buy_shield(monaco, state, shields_needed, SHIELD_FLOOR * 5);
+                tiny_gouge_super_shell(monaco, state, SHIELD_FLOOR * 5);
+            }
+
+            // if we're in first, and 2nd is faster, slow him down
+            if (self_index == 0 && back_car.speed > self.speed) {
+                maybe_banana(monaco, state, BANANA_FLOOR * 2);
+            }
+
+            // try to maintain some speed if we're slow
+            if (self.speed < 10) {
+                buy_accel_at_max(monaco, state, ACCEL_FLOOR * 3);
+            }
         }
 
         accel_with_remaining_budget_for_turn(monaco, state);
@@ -203,6 +223,30 @@ contract Bradbury is ICar {
         return false;
     }
 
+    function compute_shields_needed(
+        Monaco monaco,
+        uint256 self_index,
+        Monaco.CarData[] calldata allCars,
+        Monaco.CarData memory back_car
+    ) internal view returns (uint256 result) {
+        if (self_index == 2) return 0;
+
+        result = 1;
+        if (self_index < 2) {
+            back_car = allCars[self_index + 1];
+
+            // find position of next turn's car
+            // maybe cache some of this in the first turn?
+            (,, uint32 next_car_y,,) = monaco.getCarData(monaco.cars((monaco.turns() + 1) % 3));
+
+            // does it not match the back_car?
+            // then we need two shields if we want protection
+            if (next_car_y != back_car.y) {
+                result = 2;
+            }
+        }
+    }
+
     function buy_accel_at_max(Monaco monaco, TurnState memory state, uint256 max_unit_cost) internal {
         while (true) {
             uint256 cost = monaco.getAccelerateCost(1);
@@ -215,26 +259,32 @@ contract Bradbury is ICar {
         }
     }
 
-    function maybe_buy_any_shell_kind(Monaco monaco, TurnState memory state, uint256 budget) internal {
+    function maybe_buy_any_shell_kind(
+        Monaco monaco,
+        TurnState memory state,
+        uint256 budget,
+        Monaco.CarData memory front_car
+    ) internal {
         uint256 shell_cost = monaco.getShellCost(1);
         uint256 super_shell_cost = monaco.getSuperShellCost(1);
 
-        if (super_shell_cost < shell_cost * 15 / 10 && super_shell_cost < budget) {
-            console.log("super shell");
+        // TODO
+        // super shell more expensive than shell we're in second, or only 1 player with speed, and no bananas?
+        // then only buy shell
+
+        if (super_shell_cost < shell_cost * 15 / 10 && super_shell_cost < budget && super_shell_cost < state.balance) {
             monaco.buySuperShell(1);
-        } else if (shell_cost < budget) {
-            console.log("shell");
+            state.balance -= super_shell_cost;
+        } else if (shell_cost < budget && front_car.shield == 0 && shell_cost < state.balance) {
             monaco.buyShell(1);
-        } else {
-            console.log("shell too expensive");
+            state.balance -= shell_cost;
         }
     }
 
-    function maybe_banana(Monaco monaco, TurnState memory state) internal returns (uint256 count) {
+    function maybe_banana(Monaco monaco, TurnState memory state, uint256 price) internal returns (uint256 count) {
         uint256 cost = monaco.getBananaCost();
 
-        if (cost <= BANANA_FLOOR * 12 / 10) {
-            console.log("banana!");
+        if (cost <= price) {
             monaco.buyBanana();
             state.balance -= cost;
             return 1;
@@ -242,11 +292,10 @@ contract Bradbury is ICar {
         return 0;
     }
 
-    function maybe_buy_shield(Monaco monaco, TurnState memory state) internal {
+    function maybe_buy_shield(Monaco monaco, TurnState memory state, uint256 max_shields, uint256 price) internal {
         uint256 cost = monaco.getShieldCost(1);
 
-        if (cost <= SHIELD_FLOOR / 2) {
-            console.log("shield");
+        if (cost <= price) {
             monaco.buyShield(1);
             state.balance -= cost;
         }
@@ -258,7 +307,6 @@ contract Bradbury is ICar {
             if (cost > budget) {
                 return;
             }
-            console.log("1 speed");
             monaco.buyAcceleration(1);
             budget -= cost;
             state.speed += 1;
@@ -268,34 +316,44 @@ contract Bradbury is ICar {
 
     function accel_with_remaining_budget_for_turn(Monaco monaco, TurnState memory state) internal {
         uint256 spent = state.initialBalance - state.balance;
-        console.log("extra budget: buy speed");
         if (state.targetSpend > spent) {
             buy_accel_with_budget(monaco, state, state.targetSpend - spent);
         }
     }
 
-    function aggressive_shell_gauging(Monaco monaco, TurnState memory state) internal {
+    function aggressive_shell_gouging(Monaco monaco, TurnState memory state) internal {
         uint256 budget = state.initialBalance - state.balance;
 
-        console.log("Starting aggressive shell gauge");
-        console.log("budget", budget);
         while (true) {
             uint256 shellPrice = monaco.getShellCost(1);
             uint256 superShellPrice = monaco.getSuperShellCost(1);
 
             if (shellPrice < superShellPrice && shellPrice <= budget && shellPrice < SHELL_FLOOR * 2) {
-                console.log("price gauge shell");
                 monaco.buyShell(1);
                 budget -= shellPrice;
                 state.balance -= shellPrice;
             } else if (superShellPrice <= shellPrice && superShellPrice <= budget && superShellPrice < SHELL_FLOOR * 2)
             {
-                console.log("price gauge super shell");
                 monaco.buySuperShell(1);
                 budget -= superShellPrice;
                 state.balance -= superShellPrice;
             } else {
-                console.log("gauging done");
+                break;
+            }
+        }
+    }
+
+    function tiny_gouge_super_shell(Monaco monaco, TurnState memory state, uint256 budget) internal {
+        uint256 budget = state.initialBalance - state.balance;
+
+        while (true) {
+            uint256 superShellPrice = monaco.getSuperShellCost(1);
+
+            if (superShellPrice <= budget && superShellPrice < state.balance) {
+                monaco.buySuperShell(1);
+                budget -= superShellPrice;
+                state.balance -= superShellPrice;
+            } else {
                 break;
             }
         }
