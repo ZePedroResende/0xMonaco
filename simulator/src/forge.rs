@@ -86,7 +86,7 @@ fn runner_with_config(mut config: Config) -> MultiContractRunner {
 /// Builds a non-tracing runner
 pub fn runner() -> MultiContractRunner {
     let mut config = Config::with_root(PROJECT.root());
-    config.fs_permissions = FsPermissions::new(vec![PathPermission::read_write(manifest_root())]);
+    config.fs_permissions = FsPermissions::new(vec![PathPermission::read_write(manifest_root()), PathPermission::read_write(PathBuf::from("simulations")) , PathPermission::read_write(PathBuf::from("out"))]);
     runner_with_config(config)
 }
 

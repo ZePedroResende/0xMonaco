@@ -5,12 +5,15 @@ use termion::input::TermRead;
 use std::io::{Write, stdout, stdin};
 use std::path::Path;
 use rayon::prelude::*;
+use regex::Regex;
+use regex::bytes::Regex as Regexb;
+use regex::bytes::Captures ;
 
 pub fn download_git_files() {
     // Specify the repository URL and directory path
     let repository_url = "git@github.com:ZePedroResende/williams.git";
     let directory_path = "src/cars";
-    let directory_save = "../../src/cars/older_version";
+    let directory_save = "../src/cars/older_version";
 
     // Open the repository with ssh key
     let mut builder = git2::build::RepoBuilder::new();
@@ -29,8 +32,8 @@ pub fn download_git_files() {
         let ssh_key_password = stdin.read_passwd(&mut stdout).expect("Not valid password");
         let ssh_key_password = ssh_key_password.expect("invalid password");
          let ssh_key_password =   ssh_key_password.trim();
-        Cred::ssh_key("git",Some(Path::new("/home/resende/.ssh/id_rsa.pub")), 
-            Path::new("/home/resende/.ssh/id_rsa"),  Some(ssh_key_password))
+        Cred::ssh_key("git",Some(Path::new("/home/resende/.ssh/id_ed25519.pub")), 
+            Path::new("/home/resende/.ssh/id_ed25519"),  Some(ssh_key_password))
     });
 
     fetch_options.remote_callbacks(callbacks);
@@ -51,7 +54,7 @@ pub fn download_git_files() {
     // Walk through the commit history
     let mut revwalk = repo.revwalk().unwrap();
     revwalk.push(head.target().unwrap()).unwrap();
-    revwalk.set_sorting(git2::Sort::TIME);
+    revwalk.set_sorting(git2::Sort::TIME).unwrap();
 
     for id in revwalk {
         let commit = match repo.find_commit(id.unwrap()) {
@@ -74,21 +77,51 @@ pub fn download_git_files() {
 fn download_directory(repo: &Repository, tree: &git2::Tree, commit: &Commit, _directory_path: &str, specific_directory: &str) {
     tree.iter().for_each(|entry| {
         let entry_path = entry.name().unwrap();
-        let object = repo.find_object(entry.id(), Some(ObjectType::Blob)).unwrap();
-        let blob = object.peel_to_blob().unwrap();
-        let content = blob.content();
-        write_file(entry_path, content, commit, specific_directory);
+        let object = repo.find_object(entry.id(), None).unwrap();
+
+        if object.kind() == Some(ObjectType::Blob) {
+            let blob = object.peel_to_blob().unwrap();
+            let content = blob.content();
+            write_file(entry_path, content, commit, specific_directory);
+        }
     });
 }
 
 
 fn write_file(path: &str, buffer: &[u8], commit: &Commit, specific_directory: &str) {
-    let new_path = format!("{}-{}", path, commit.id());
+    let black_list = vec!["Bradbury-b99f98cb6d63e4f4a7874ad9914fdfc74ed42c53", "Bradbury-e8b021f3a859632d57fe4a6628789862f86e8c2f"];
+
+    let re = Regex::new(r"(.*)?.sol$").unwrap();
+    let captures = re.captures(path).expect("failed to capture file name from solidity");
+
+    let file_name = captures.get(1).expect("failed to match file").as_str(); 
+    let new_name = format!("{}-{}", file_name, commit.id());
+    if black_list.contains(&&new_name.as_str()) { return;}
+    let new_path = format!("{}.sol", new_name);
+    
     let full_path = format!("{}/{}", specific_directory, new_path);
+
     let path = Path::new(&full_path);
+    println!("{:?}", path);
     if let Some(dir) = path.parent() {
         fs::create_dir_all(dir).unwrap();
     }
     let mut file = File::create(&full_path).unwrap();
-    file.write_all(buffer).unwrap();
+
+    let re_contract_name = Regexb::new(r"\s*contract\s*(\w*)\s*(.*)?\{").unwrap();
+    let replaced_buffer = re_contract_name.replace(&buffer, |caps: &Captures| {
+        let mut new_contract_name : Vec<u8> = b"\ncontract ".to_vec();
+        new_contract_name.extend(&caps[1]);
+        new_contract_name.push(b' ');
+        new_contract_name.extend(&caps[2]);
+        new_contract_name.push(b' ');
+        new_contract_name.push(b'{');
+        new_contract_name
+    });
+
+    let re_contract_name = Regexb::new(r"\./\.\./interfaces/ICar.sol").unwrap();
+    let replaced_buffer = re_contract_name.replace(&replaced_buffer, &b"./../../interfaces/ICar.sol"[..]);
+
+
+    file.write_all(&replaced_buffer).unwrap();
 }
