@@ -3584,6 +3584,7 @@ dependencies = [
  "git2",
  "hex",
  "hex-literal",
+ "itertools",
  "once_cell",
  "rayon",
  "regex",

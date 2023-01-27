@@ -1,6 +1,8 @@
 //taken from https://github.com/polytope-labs/solidity-merkle-trees/blob/main/tests/src/forge.rs
 use ethers::{
     abi::{Detokenize, Tokenize},
+    solc::utils::source_files,
+    solc::utils::source_name,
     solc::{Project, ProjectCompileOutput, ProjectPathsConfig},
     types::U256,
 };
@@ -23,8 +25,17 @@ use std::{
 static PROJECT: Lazy<Project> = Lazy::new(|| {
     let mut root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     root = PathBuf::from(root.parent().unwrap().clone());
-    let paths = ProjectPathsConfig::builder().root(root.clone()).sources(root).build().unwrap();
-    Project::builder().paths(paths).ephemeral().no_artifacts().build().unwrap()
+    let paths = ProjectPathsConfig::builder()
+        .root(root.clone())
+        .sources(root)
+        .build()
+        .unwrap();
+    Project::builder()
+        .paths(paths)
+        .ephemeral()
+        .no_artifacts()
+        .build()
+        .unwrap()
 });
 
 static EVM_OPTS: Lazy<EvmOpts> = Lazy::new(|| EvmOpts {
@@ -86,7 +97,11 @@ fn runner_with_config(mut config: Config) -> MultiContractRunner {
 /// Builds a non-tracing runner
 pub fn runner() -> MultiContractRunner {
     let mut config = Config::with_root(PROJECT.root());
-    config.fs_permissions = FsPermissions::new(vec![PathPermission::read_write(manifest_root()), PathPermission::read_write(PathBuf::from("simulations")) , PathPermission::read_write(PathBuf::from("out"))]);
+    config.fs_permissions = FsPermissions::new(vec![
+        PathPermission::read_write(manifest_root()),
+        PathPermission::read_write(PathBuf::from("simulations")),
+        PathPermission::read_write(PathBuf::from("out")),
+    ]);
     runner_with_config(config)
 }
 
@@ -147,4 +162,28 @@ where
     println!("Gas used {fn_name}: {:#?}", result.gas_used);
 
     result.result
+}
+
+pub fn print_contract_files_and_names() -> Vec<String>{
+    let out = (*COMPILED)
+        .clone()
+        .output()
+        .with_stripped_file_prefixes(PROJECT.root());
+
+    let sources: Vec<(String)> = out
+        .contracts_with_files_iter()
+        .filter(|(a, _, _)| a.contains("src/cars"))
+        .map(|(a, b, _)| {
+            let a = if a.contains("older_version") {
+                 a.strip_prefix("src/cars/older_version/").unwrap_or(a)
+            } else if a.contains("samples") {
+                a.strip_prefix("src/cars/samples/").unwrap_or(a)
+            } else {
+                a.strip_prefix("src/cars/").unwrap_or(a)
+            };
+            format!("{a}:{b}")
+        })
+        .collect();
+
+    sources
 }

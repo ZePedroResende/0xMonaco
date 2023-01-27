@@ -1,13 +1,13 @@
 extern crate git2;
-use git2::{Repository, Commit, ObjectType, Cred, FetchOptions};
-use std::fs::{self, File};
-use termion::input::TermRead;
-use std::io::{Write, stdout, stdin};
-use std::path::Path;
+use git2::{Commit, Cred, FetchOptions, ObjectType, Repository};
 use rayon::prelude::*;
-use regex::Regex;
+use regex::bytes::Captures;
 use regex::bytes::Regex as Regexb;
-use regex::bytes::Captures ;
+use regex::Regex;
+use std::fs::{self, File};
+use std::io::{stdin, stdout, Write};
+use std::path::Path;
+use termion::input::TermRead;
 
 pub fn download_git_files() {
     // Specify the repository URL and directory path
@@ -31,9 +31,15 @@ pub fn download_git_files() {
 
         let ssh_key_password = stdin.read_passwd(&mut stdout).expect("Not valid password");
         let ssh_key_password = ssh_key_password.expect("invalid password");
-         let ssh_key_password =   ssh_key_password.trim();
-        Cred::ssh_key("git",Some(Path::new("/home/resende/.ssh/id_ed25519.pub")), 
-            Path::new("/home/resende/.ssh/id_ed25519"),  Some(ssh_key_password))
+        let ssh_key_password = ssh_key_password.trim();
+        //Cred::ssh_key("git",Some(Path::new("/home/resende/.ssh/id_ed25519.pub")),
+        //    Path::new("/home/resende/.ssh/id_ed25519"),  Some(ssh_key_password))
+        Cred::ssh_key(
+            "git",
+            Some(Path::new("/home/resende/.ssh/id_rsa.pub")),
+            Path::new("/home/resende/.ssh/id_rsa"),
+            Some(ssh_key_password),
+        )
     });
 
     fetch_options.remote_callbacks(callbacks);
@@ -74,7 +80,13 @@ pub fn download_git_files() {
     }
 }
 
-fn download_directory(repo: &Repository, tree: &git2::Tree, commit: &Commit, _directory_path: &str, specific_directory: &str) {
+fn download_directory(
+    repo: &Repository,
+    tree: &git2::Tree,
+    commit: &Commit,
+    _directory_path: &str,
+    specific_directory: &str,
+) {
     tree.iter().for_each(|entry| {
         let entry_path = entry.name().unwrap();
         let object = repo.find_object(entry.id(), None).unwrap();
@@ -87,18 +99,24 @@ fn download_directory(repo: &Repository, tree: &git2::Tree, commit: &Commit, _di
     });
 }
 
-
 fn write_file(path: &str, buffer: &[u8], commit: &Commit, specific_directory: &str) {
-    let black_list = vec!["Bradbury-b99f98cb6d63e4f4a7874ad9914fdfc74ed42c53", "Bradbury-e8b021f3a859632d57fe4a6628789862f86e8c2f"];
+    let black_list = vec![
+        "Bradbury-b99f98cb6d63e4f4a7874ad9914fdfc74ed42c53",
+        "Bradbury-e8b021f3a859632d57fe4a6628789862f86e8c2f",
+    ];
 
     let re = Regex::new(r"(.*)?.sol$").unwrap();
-    let captures = re.captures(path).expect("failed to capture file name from solidity");
+    let captures = re
+        .captures(path)
+        .expect("failed to capture file name from solidity");
 
-    let file_name = captures.get(1).expect("failed to match file").as_str(); 
+    let file_name = captures.get(1).expect("failed to match file").as_str();
     let new_name = format!("{}-{}", file_name, commit.id());
-    if black_list.contains(&&new_name.as_str()) { return;}
+    if black_list.contains(&&new_name.as_str()) {
+        return;
+    }
     let new_path = format!("{}.sol", new_name);
-    
+
     let full_path = format!("{}/{}", specific_directory, new_path);
 
     let path = Path::new(&full_path);
@@ -110,7 +128,7 @@ fn write_file(path: &str, buffer: &[u8], commit: &Commit, specific_directory: &s
 
     let re_contract_name = Regexb::new(r"\s*contract\s*(\w*)\s*(.*)?\{").unwrap();
     let replaced_buffer = re_contract_name.replace(&buffer, |caps: &Captures| {
-        let mut new_contract_name : Vec<u8> = b"\ncontract ".to_vec();
+        let mut new_contract_name: Vec<u8> = b"\ncontract ".to_vec();
         new_contract_name.extend(&caps[1]);
         new_contract_name.push(b' ');
         new_contract_name.extend(&caps[2]);
@@ -120,8 +138,8 @@ fn write_file(path: &str, buffer: &[u8], commit: &Commit, specific_directory: &s
     });
 
     let re_contract_name = Regexb::new(r"\./\.\./interfaces/ICar.sol").unwrap();
-    let replaced_buffer = re_contract_name.replace(&replaced_buffer, &b"./../../interfaces/ICar.sol"[..]);
-
+    let replaced_buffer =
+        re_contract_name.replace(&replaced_buffer, &b"./../../interfaces/ICar.sol"[..]);
 
     file.write_all(&replaced_buffer).unwrap();
 }

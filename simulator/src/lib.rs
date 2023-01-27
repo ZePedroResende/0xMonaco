@@ -3,47 +3,29 @@
 
 mod forge;
 
-use crate::forge::{execute, runner};
-use ethers::{abi::Token, types::U256, utils::keccak256};
-use hex_literal::hex;
+use crate::forge::{execute, runner, print_contract_files_and_names};
+use ethers::types::U256;
 
-pub fn run_simulation() {
-//    .iter()
-//    .map(|h| keccak256(&h))
-//    .collect::<Vec<[u8; 32]>>();
-//
-//    let tree = MerkleTree::<Keccak256>::from_leaves(&leaf_hashes);
-//
-//    let leaves = vec![0, 2, 5, 9, 20, 25, 31];
-//    let leaves_with_indices = leaves
-//        .iter()
-//        .map(|i| {
-//            Token::Tuple(vec![
-//                Token::Uint(U256::from(*i)),
-//                Token::FixedBytes(leaf_hashes[*i].to_vec()),
-//            ])
-//        })
-//        .collect::<Vec<_>>();
-//
-//    let proof = tree.proof_2d(&leaves);
-//
-//    let args = proof
-//        .into_iter()
-//        .map(|layers| {
-//            let layers = layers
-//                .into_iter()
-//                .map(|(index, node)| {
-//                    Token::Tuple(vec![
-//                        Token::Uint(U256::from(index)),
-//                        Token::FixedBytes(node.to_vec()),
-//                    ])
-//                })
-//                .collect::<Vec<_>>();
-//            Token::Array(layers)
-//        })
-//        .collect::<Vec<_>>();
+use rayon::prelude::*;
+use rayon::iter::ParallelIterator;
+use rayon::iter::ParallelBridge;
+use itertools::Itertools;
+
 type Out = (U256,String, U256,String, U256,String );
+pub fn run_simulation() {
+    let contracts : Vec<String> = print_contract_files_and_names()[..3].to_vec();
 
+
+    println!("{:?}", contracts);
+    let permutation  = contracts.into_iter().permutations(3).unique();
+
+    permutation.par_bridge().for_each(move |v| {
+        run_test(v);
+    });
+
+}
+
+fn run_test(v: Vec<String>) -> Out{
 
     let mut runner = runner();
 
@@ -51,9 +33,12 @@ type Out = (U256,String, U256,String, U256,String );
         &mut runner,
         "SimulateTest",
         "testSimulationByName",
-//        (),
-        ("B_biggerAccelFloor.sol:BradburyBigAccelFloor".to_string(),"B_biggerEndBudget.sol:BradburyBiggerEndBudget".to_string(),"B_goBananas.sol:BradburyGoBananas".to_string()), 
+        (v[0].to_owned(),v[1].to_owned(),v[2].to_owned()), 
     );
 
-    println!("{:?}", calculated);
+        println!("{},{},{}", v[0], v[1],v[2]);
+        println!("{:?}", calculated);
+        calculated
 }
+
+
