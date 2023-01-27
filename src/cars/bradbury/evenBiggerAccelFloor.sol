@@ -11,9 +11,9 @@ contract BradburyEvenBiggerAccelFloor is BradburyBase {
     function takeYourTurn(
         Monaco monaco,
         Monaco.CarData[] calldata allCars,
-        uint256[] calldata bananas,
+        uint256[] calldata, /*bananas*/
         uint256 self_index
-    ) external {
+    ) external override {
         //
         // setup vars
         //
@@ -23,6 +23,10 @@ contract BradburyEvenBiggerAccelFloor is BradburyBase {
         Monaco.CarData memory back_car;
 
         TurnState memory state = TurnState({
+            self_index: self_index,
+            self: self,
+            front_car: front_car,
+            back_car: back_car,
             leading: self_index == 0,
             initialBalance: self.balance,
             balance: self.balance,
@@ -132,7 +136,7 @@ contract BradburyEvenBiggerAccelFloor is BradburyBase {
                 maybe_buy_any_shell_kind(monaco, state, SHELL_FLOOR * 5, front_car);
             }
 
-            uint256 shields_needed = compute_shields_needed(monaco, self_index, allCars, back_car);
+            uint256 shields_needed = compute_shields_needed(monaco, self_index, back_car);
 
             // if we're 1st, we skip the condition "if we're close to the front car"
             uint256 distance_to_front_car = type(uint256).max;

@@ -29,6 +29,10 @@ abstract contract BaseCar is ICar {
         uint256 pctLeft;
         uint256 remainingTurns;
         uint256 targetSpend;
+        uint256 self_index;
+        Monaco.CarData self;
+        Monaco.CarData front_car;
+        Monaco.CarData back_car;
     }
 
     //
@@ -48,18 +52,15 @@ abstract contract BaseCar is ICar {
         return false;
     }
 
-    function compute_shields_needed(
-        Monaco monaco,
-        uint256 self_index,
-        Monaco.CarData[] calldata allCars,
-        Monaco.CarData memory back_car
-    ) internal view returns (uint256 result) {
+    function compute_shields_needed(Monaco monaco, uint256 self_index, Monaco.CarData memory back_car)
+        internal
+        view
+        returns (uint256 result)
+    {
         if (self_index == 2) return 0;
 
         result = 1;
         if (self_index < 2) {
-            back_car = allCars[self_index + 1];
-
             // find position of next turn's car
             // maybe cache some of this in the first turn?
             (,, uint32 next_car_y,,) = monaco.getCarData(monaco.cars((monaco.turns() + 1) % 3));
@@ -118,9 +119,10 @@ abstract contract BaseCar is ICar {
     }
 
     function maybe_buy_shield(Monaco monaco, TurnState memory state, uint256 max_shields, uint256 price) internal {
+        // TODO this should be `max_shields` instead of shields_needed
         uint256 cost = monaco.getShieldCost(1);
 
-        if (cost <= price && state.balance >= cost) {
+        if (cost <= price * 1 && state.balance >= cost) {
             monaco.buyShield(1);
             state.balance -= cost;
         }
