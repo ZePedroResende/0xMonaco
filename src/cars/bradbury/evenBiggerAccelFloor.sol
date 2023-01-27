@@ -8,9 +8,7 @@ import {BradburyBase} from "./Base.sol";
 contract BradburyEvenBiggerAccelFloor is BradburyBase {
     using SafeCastLib for uint256;
 
-    function beg_accel_mul() internal view override returns (uint256) {
-        return 5;
-    }
+    constructor() BradburyBase(Params({beg_accel_mul: 6})) {}
 
     function sayMyName() external pure returns (string memory) {
         return "Bradbury-evenBiggerAccelFloor";

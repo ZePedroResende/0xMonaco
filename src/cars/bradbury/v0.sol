@@ -8,6 +8,8 @@ import {BradburyBase} from "./Base.sol";
 contract BradburyV0 is BradburyBase {
     using SafeCastLib for uint256;
 
+    constructor() BradburyBase(Params({beg_accel_mul: 2})) {}
+
     function sayMyName() external pure returns (string memory) {
         return "Bradbury-v0";
     }

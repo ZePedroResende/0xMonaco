@@ -31,6 +31,16 @@ abstract contract BradburyBase is BaseCar {
         BLITZKRIEG // all out war
     }
 
+    struct Params {
+        uint256 beg_accel_mul;
+    }
+
+    uint256 public immutable beg_accel_mul;
+
+    constructor(Params memory params) {
+        beg_accel_mul = params.beg_accel_mul;
+    }
+
     function takeYourTurn(
         Monaco monaco,
         Monaco.CarData[] calldata allCars,
@@ -107,7 +117,7 @@ abstract contract BradburyBase is BaseCar {
             state.speed += 11;
         }
 
-        buy_accel_at_max(monaco, state, ACCEL_FLOOR * beg_accel_mul());
+        buy_accel_at_max(monaco, state, ACCEL_FLOOR * beg_accel_mul);
     }
 
     function onStratLag(Monaco monaco, TurnState memory state) internal virtual {
@@ -199,11 +209,6 @@ abstract contract BradburyBase is BaseCar {
     //
     // constants
     //
-
-    /// beginning of turn - accel price multiplier
-    function beg_accel_mul() internal view virtual returns (uint256) {
-        return 2;
-    }
 
     /// lag strat, % from banana floor price we're willing to take
     function lag_banana_mul() internal view virtual returns (uint256) {
