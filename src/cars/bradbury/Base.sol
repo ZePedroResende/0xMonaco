@@ -107,7 +107,7 @@ abstract contract BradburyBase is BaseCar {
             state.speed += 11;
         }
 
-        buy_accel_at_max(monaco, state, ACCEL_FLOOR * 2);
+        buy_accel_at_max(monaco, state, ACCEL_FLOOR * beg_accel_mul());
     }
 
     function onStratLag(Monaco monaco, TurnState memory state) internal virtual {
@@ -195,5 +195,12 @@ abstract contract BradburyBase is BaseCar {
 
     function onTurnFinish(Monaco monaco, TurnState memory state) internal virtual {
         accel_with_remaining_budget_for_turn(monaco, state);
+    }
+
+    //
+    // constants
+    //
+    function beg_accel_mul() internal view virtual returns (uint256) {
+        return 2;
     }
 }
