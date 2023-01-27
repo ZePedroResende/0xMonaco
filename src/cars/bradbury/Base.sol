@@ -78,7 +78,7 @@ abstract contract BradburyBase is BaseCar {
             // leave some overhead for blitzkrieg
             state.remainingTurns = self.speed > 0 ? (800 - self.y) / self.speed : 800;
             if (state.remainingTurns == 0) state.remainingTurns = 1;
-            state.targetSpend = state.initialBalance / state.remainingTurns * 9 / 10;
+            state.targetSpend = state.initialBalance / state.remainingTurns * hodl_target_spend_pct() / 100;
         } else {
             // we're in 2nd or 3rd, lag behind the next car
             strat = Strat.LAG;
@@ -86,7 +86,7 @@ abstract contract BradburyBase is BaseCar {
 
             state.remainingTurns = self.speed > 0 ? (800 - self.y) / self.speed : 800;
             if (state.remainingTurns == 0) state.remainingTurns = 1;
-            state.targetSpend = state.initialBalance / state.remainingTurns * 9 / 10;
+            state.targetSpend = state.initialBalance / state.remainingTurns * lag_target_spend_pct() / 100;
         }
 
         onTurnBeginning(monaco, state);
@@ -113,6 +113,8 @@ abstract contract BradburyBase is BaseCar {
     function onStratLag(Monaco monaco, TurnState memory state) internal virtual {
         uint256 self_next_pos = state.self.y + state.self.speed;
         uint256 other_next_pos = state.front_car.y + state.front_car.speed;
+
+        buy_accel_at_max(monaco, state, ACCEL_FLOOR * lag_accel_mul());
 
         // if is accel expensive, and next guy is too fast or too far in front?
         // TODO tweak this value?
@@ -143,7 +145,7 @@ abstract contract BradburyBase is BaseCar {
         if (state.self_index == 1 && state.self.speed > 10) {
             //   2nd and is a banana worth it?.maybe buy one?
             //   if no banana, is a shield VERY cheap?.maybe buy one?
-            uint256 bought = maybe_banana(monaco, state, BANANA_FLOOR * 12 / 10);
+            uint256 bought = maybe_banana(monaco, state, BANANA_FLOOR * lag_banana_mul() / 100);
 
             if (bought == 0) {
                 maybe_buy_shield(monaco, state, 1, SHIELD_FLOOR / 2);
@@ -153,16 +155,13 @@ abstract contract BradburyBase is BaseCar {
     }
 
     function onStratHodl(Monaco monaco, TurnState memory state) internal virtual {
-        maybe_banana(monaco, state, BANANA_FLOOR * 12 / 10);
+        maybe_banana(monaco, state, BANANA_FLOOR * hodl_banana_mul() / 100);
         aggressive_shell_gouging(monaco, state);
     }
 
     function onStratBlitzkrieg(Monaco monaco, TurnState memory state) internal virtual {
         if (try_finish_right_now(monaco, state)) return;
 
-        //.buy_accel_at_max(monaco, state, ACCEL_FLOOR * ACCEL_BLITZKRIEG_MUL);
-
-        // TODO
         if (state.self_index != 0) {
             // priority 1, buy a shell or supershell if we're not first, and if the first is not shielded
             maybe_buy_any_shell_kind(monaco, state, SHELL_FLOOR * 5, state.front_car);
@@ -189,7 +188,7 @@ abstract contract BradburyBase is BaseCar {
 
         // try to maintain some speed if we're slow
         if (state.self.speed < 10) {
-            buy_accel_at_max(monaco, state, ACCEL_FLOOR * 3);
+            buy_accel_at_max(monaco, state, ACCEL_FLOOR * blitz_accel_mul());
         }
     }
 
@@ -200,7 +199,40 @@ abstract contract BradburyBase is BaseCar {
     //
     // constants
     //
+
+    /// beginning of turn - accel price multiplier
     function beg_accel_mul() internal view virtual returns (uint256) {
         return 2;
+    }
+
+    /// lag strat, % from banana floor price we're willing to take
+    function lag_banana_mul() internal view virtual returns (uint256) {
+        return 120;
+    }
+
+    /// lag strat, % from accel floor price we're willing to take
+    function lag_accel_mul() internal view virtual returns (uint256) {
+        return 0;
+    }
+
+    /// hodl strat, % from banana floor price we're willing to take
+    function hodl_banana_mul() internal view virtual returns (uint256) {
+        return 120;
+    }
+
+    /// during hodl strat, how much of turn's budget to spend
+    function hodl_target_spend_pct() internal view virtual returns (uint256) {
+        return 90;
+    }
+
+    /// during blitz strat, how much of turn's budget to spend
+    function blitz_accel_mul() internal view virtual returns (uint256) {
+        return 3;
+    }
+
+    /// during lag strat, how much of turn's budget to spend
+    /// in percentage
+    function lag_target_spend_pct() internal view virtual returns (uint256) {
+        return 90;
     }
 }

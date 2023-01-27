@@ -8,84 +8,16 @@ import {BradburyBase} from "./Base.sol";
 contract BradburyBiggerBetter is BradburyBase {
     using SafeCastLib for uint256;
 
-    function takeYourTurn(
-        Monaco monaco,
-        Monaco.CarData[] calldata allCars,
-        uint256[] calldata, /*bananas*/
-        uint256 self_index
-    ) external override {
-        //
-        // setup vars
-        //
-        Monaco.CarData memory self = allCars[self_index];
-        Monaco.CarData memory front_car;
-        if (self_index > 0) front_car = allCars[self_index - 1];
-        Monaco.CarData memory back_car;
-
-        TurnState memory state = TurnState({
-            self_index: self_index,
-            self: self,
-            front_car: front_car,
-            back_car: back_car,
-            leading: self_index == 0,
-            initialBalance: self.balance,
-            balance: self.balance,
-            speed: self.speed,
-            y: self.y,
-            pctLeft: self.balance * 100 / INITIAL_BALANCE,
-            remainingTurns: 0,
-            targetSpend: 0
-        });
-        Strat strat;
-
-        // define more state depending on race stage
-        if (allCars[0].y >= BLITZKRIEG) {
-            // leader is almost at the end! blitzkrieg regardless
-            // of if the leader is us or someone else
-            strat = Strat.BLITZKRIEG;
-
-            // we spend 100% of our budget per turn
-            state.remainingTurns = self.speed > 0 ? (1000 - self.y) / self.speed : 1000;
-            if (state.remainingTurns == 0) state.remainingTurns = 1;
-            state.targetSpend = state.initialBalance / state.remainingTurns;
-        } else if (self_index == 0) {
-            // we're in 1st, try to hold our position
-            strat = Strat.HODL;
-
-            // try and spend 70% of our per-turn budget
-            // leave some overhead for blitzkrieg
-            state.remainingTurns = self.speed > 0 ? (800 - self.y) / self.speed : 800;
-            if (state.remainingTurns == 0) state.remainingTurns = 1;
-            state.targetSpend = state.initialBalance / state.remainingTurns * 8 / 10;
-        } else {
-            // we're in 2nd or 3rd, lag behind the next car
-            strat = Strat.LAG;
-            front_car = allCars[self_index - 1];
-
-            state.remainingTurns = self.speed > 0 ? (800 - self.y) / self.speed : 800;
-            if (state.remainingTurns == 0) state.remainingTurns = 1;
-            state.targetSpend = state.initialBalance / state.remainingTurns * 8 / 10;
-        }
-
-        onTurnBeginning(monaco, state);
-        if (strat == Strat.LAG) {
-            onStratLag(monaco, state);
-        } else if (strat == Strat.HODL) {
-            onStratHodl(monaco, state);
-        } else {
-            onStratBlitzkrieg(monaco, state);
-        }
-        onTurnFinish(monaco, state);
+    function hodl_target_spend_pct() internal view override returns (uint256) {
+        return 80;
     }
 
-    function onTurnBeginning(Monaco monaco, TurnState memory state) internal override {
-        if (monaco.turns() == 1) {
-            // we have 1st move advantage
-            state.balance -= monaco.buyAcceleration(11);
-            state.speed += 11;
-        }
+    function lag_target_spend_pct() internal view override returns (uint256) {
+        return 80;
+    }
 
-        buy_accel_at_max(monaco, state, ACCEL_FLOOR * 6);
+    function beg_accel_mul() internal view override returns (uint256) {
+        return 6;
     }
 
     function sayMyName() external pure returns (string memory) {
