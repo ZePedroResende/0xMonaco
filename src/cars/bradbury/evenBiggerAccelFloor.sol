@@ -8,7 +8,9 @@ import {BradburyBase} from "./Base.sol";
 contract BradburyEvenBiggerAccelFloor is BradburyBase {
     using SafeCastLib for uint256;
 
-    constructor() BradburyBase(Params({beg_accel_mul: 6})) {}
+    constructor()
+        BradburyBase(Params({beg_accel_mul: 6, lag_accel_mul: 0, lag_banana_pct: 120, hodl_banana_pct: 120}))
+    {}
 
     function sayMyName() external pure returns (string memory) {
         return "Bradbury-evenBiggerAccelFloor";

@@ -8,7 +8,9 @@ import {BradburyBase} from "./Base.sol";
 contract BradburyBiggerBetter is BradburyBase {
     using SafeCastLib for uint256;
 
-    constructor() BradburyBase(Params({beg_accel_mul: 6})) {}
+    constructor()
+        BradburyBase(Params({beg_accel_mul: 6, lag_accel_mul: 0, lag_banana_pct: 120, hodl_banana_pct: 120}))
+    {}
 
     function hodl_target_spend_pct() internal view override returns (uint256) {
         return 80;

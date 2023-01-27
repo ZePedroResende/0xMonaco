@@ -33,12 +33,25 @@ abstract contract BradburyBase is BaseCar {
 
     struct Params {
         uint256 beg_accel_mul;
+        uint256 lag_accel_mul;
+        uint256 lag_banana_pct;
+        uint256 hodl_banana_pct;
     }
 
+    /// beginning of turn, % from accel floor price we're willing to take
     uint256 public immutable beg_accel_mul;
+    /// lag strat, % from accel floor price we're willing to take
+    uint256 public immutable lag_accel_mul;
+    /// lag strat, % from accel floor price we're willing to take
+    uint256 public immutable lag_banana_pct;
+    /// hodl strat, % from banana floor price we're willing to take
+    uint256 public immutable hodl_banana_pct;
 
     constructor(Params memory params) {
         beg_accel_mul = params.beg_accel_mul;
+        lag_accel_mul = params.lag_accel_mul;
+        lag_banana_pct = params.lag_banana_pct;
+        hodl_banana_pct = params.hodl_banana_pct;
     }
 
     function takeYourTurn(
@@ -124,7 +137,7 @@ abstract contract BradburyBase is BaseCar {
         uint256 self_next_pos = state.self.y + state.self.speed;
         uint256 other_next_pos = state.front_car.y + state.front_car.speed;
 
-        buy_accel_at_max(monaco, state, ACCEL_FLOOR * lag_accel_mul());
+        buy_accel_at_max(monaco, state, ACCEL_FLOOR * lag_accel_mul);
 
         // if is accel expensive, and next guy is too fast or too far in front?
         // TODO tweak this value?
@@ -155,7 +168,7 @@ abstract contract BradburyBase is BaseCar {
         if (state.self_index == 1 && state.self.speed > 10) {
             //   2nd and is a banana worth it?.maybe buy one?
             //   if no banana, is a shield VERY cheap?.maybe buy one?
-            uint256 bought = maybe_banana(monaco, state, BANANA_FLOOR * lag_banana_mul() / 100);
+            uint256 bought = maybe_banana(monaco, state, BANANA_FLOOR * lag_banana_pct / 100);
 
             if (bought == 0) {
                 maybe_buy_shield(monaco, state, 1, SHIELD_FLOOR / 2);
@@ -165,7 +178,7 @@ abstract contract BradburyBase is BaseCar {
     }
 
     function onStratHodl(Monaco monaco, TurnState memory state) internal virtual {
-        maybe_banana(monaco, state, BANANA_FLOOR * hodl_banana_mul() / 100);
+        maybe_banana(monaco, state, BANANA_FLOOR * hodl_banana_pct / 100);
         aggressive_shell_gouging(monaco, state);
     }
 
@@ -209,21 +222,6 @@ abstract contract BradburyBase is BaseCar {
     //
     // constants
     //
-
-    /// lag strat, % from banana floor price we're willing to take
-    function lag_banana_mul() internal view virtual returns (uint256) {
-        return 120;
-    }
-
-    /// lag strat, % from accel floor price we're willing to take
-    function lag_accel_mul() internal view virtual returns (uint256) {
-        return 0;
-    }
-
-    /// hodl strat, % from banana floor price we're willing to take
-    function hodl_banana_mul() internal view virtual returns (uint256) {
-        return 120;
-    }
 
     /// during hodl strat, how much of turn's budget to spend
     function hodl_target_spend_pct() internal view virtual returns (uint256) {
