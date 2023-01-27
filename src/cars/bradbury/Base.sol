@@ -78,7 +78,7 @@ abstract contract BradburyBase is BaseCar {
             // leave some overhead for blitzkrieg
             state.remainingTurns = self.speed > 0 ? (800 - self.y) / self.speed : 800;
             if (state.remainingTurns == 0) state.remainingTurns = 1;
-            state.targetSpend = state.initialBalance / state.remainingTurns * 8 / 10;
+            state.targetSpend = state.initialBalance / state.remainingTurns * 9 / 10;
         } else {
             // we're in 2nd or 3rd, lag behind the next car
             strat = Strat.LAG;
@@ -86,7 +86,7 @@ abstract contract BradburyBase is BaseCar {
 
             state.remainingTurns = self.speed > 0 ? (800 - self.y) / self.speed : 800;
             if (state.remainingTurns == 0) state.remainingTurns = 1;
-            state.targetSpend = state.initialBalance / state.remainingTurns * 8 / 10;
+            state.targetSpend = state.initialBalance / state.remainingTurns * 9 / 10;
         }
 
         onTurnBeginning(monaco, state);
@@ -134,6 +134,21 @@ abstract contract BradburyBase is BaseCar {
                 // nuke 'em, but not so hard
                 maybe_buy_any_shell_kind(monaco, state, SHELL_FLOOR * 3, state.front_car);
             }
+        }
+
+        // TODO do we want to check our budget here?
+
+        // if we're in second and we have speed?
+        // TODO tweak this value
+        if (state.self_index == 1 && state.self.speed > 10) {
+            //   2nd and is a banana worth it?.maybe buy one?
+            //   if no banana, is a shield VERY cheap?.maybe buy one?
+            uint256 bought = maybe_banana(monaco, state, BANANA_FLOOR * 12 / 10);
+
+            if (bought == 0) {
+                maybe_buy_shield(monaco, state, 1, SHIELD_FLOOR / 2);
+            }
+            aggressive_shell_gouging(monaco, state);
         }
     }
 
