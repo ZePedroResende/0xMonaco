@@ -9,16 +9,18 @@ contract BradburyBiggerBetter is BradburyBase {
     using SafeCastLib for uint256;
 
     constructor()
-        BradburyBase(Params({beg_accel_pct: 600, lag_accel_pct: 0, lag_banana_pct: 120, hodl_banana_pct: 120}))
+        BradburyBase(
+            Params({
+                beg_accel_pct: 600,
+                lag_accel_pct: 0,
+                lag_banana_pct: 120,
+                lag_target_spend_pct: 80,
+                hodl_banana_pct: 120,
+                hodl_target_spend_pct: 80,
+                blitz_accel_pct: 300
+            })
+        )
     {}
-
-    function hodl_target_spend_pct() internal view override returns (uint256) {
-        return 80;
-    }
-
-    function lag_target_spend_pct() internal view override returns (uint256) {
-        return 80;
-    }
 
     function sayMyName() external pure returns (string memory) {
         return "Bradbury-BiggerBetter";

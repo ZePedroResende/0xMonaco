@@ -32,26 +32,38 @@ abstract contract BradburyBase is BaseCar {
     }
 
     struct Params {
+        /// beginning of turn, % from accel floor price we're willing to take
         uint256 beg_accel_pct;
+        /// lag strat, % from accel floor price we're willing to take
         uint256 lag_accel_pct;
+        /// lag strat, % from banana floor price we're willing to take
         uint256 lag_banana_pct;
+        /// during lag strat, how much of turn's budget to spend
+        uint256 lag_target_spend_pct;
+        /// hodl strat, % from banana floor price we're willing to take
         uint256 hodl_banana_pct;
+        /// during hodl strat, how much of turn's budget to spend
+        uint256 hodl_target_spend_pct;
+        /// blitz strat, % from accel floor price we're willing to take
+        uint256 blitz_accel_pct;
     }
 
-    /// beginning of turn, % from accel floor price we're willing to take
     uint256 public immutable beg_accel_pct;
-    /// lag strat, % from accel floor price we're willing to take
     uint256 public immutable lag_accel_pct;
-    /// lag strat, % from accel floor price we're willing to take
     uint256 public immutable lag_banana_pct;
-    /// hodl strat, % from banana floor price we're willing to take
+    uint256 public immutable lag_target_spend_pct;
     uint256 public immutable hodl_banana_pct;
+    uint256 public immutable hodl_target_spend_pct;
+    uint256 public immutable blitz_accel_pct;
 
     constructor(Params memory params) {
         beg_accel_pct = params.beg_accel_pct;
         lag_accel_pct = params.lag_accel_pct;
         lag_banana_pct = params.lag_banana_pct;
+        lag_target_spend_pct = params.lag_target_spend_pct;
         hodl_banana_pct = params.hodl_banana_pct;
+        hodl_target_spend_pct = params.hodl_target_spend_pct;
+        blitz_accel_pct = params.blitz_accel_pct;
     }
 
     function takeYourTurn(
@@ -101,7 +113,7 @@ abstract contract BradburyBase is BaseCar {
             // leave some overhead for blitzkrieg
             state.remainingTurns = self.speed > 0 ? (800 - self.y) / self.speed : 800;
             if (state.remainingTurns == 0) state.remainingTurns = 1;
-            state.targetSpend = state.initialBalance / state.remainingTurns * hodl_target_spend_pct() / 100;
+            state.targetSpend = state.initialBalance / state.remainingTurns * hodl_target_spend_pct / 100;
         } else {
             // we're in 2nd or 3rd, lag behind the next car
             strat = Strat.LAG;
@@ -109,7 +121,7 @@ abstract contract BradburyBase is BaseCar {
 
             state.remainingTurns = self.speed > 0 ? (800 - self.y) / self.speed : 800;
             if (state.remainingTurns == 0) state.remainingTurns = 1;
-            state.targetSpend = state.initialBalance / state.remainingTurns * lag_target_spend_pct() / 100;
+            state.targetSpend = state.initialBalance / state.remainingTurns * lag_target_spend_pct / 100;
         }
 
         onTurnBeginning(monaco, state);
@@ -211,31 +223,11 @@ abstract contract BradburyBase is BaseCar {
 
         // try to maintain some speed if we're slow
         if (state.self.speed < 10) {
-            buy_accel_at_max(monaco, state, ACCEL_FLOOR * blitz_accel_mul());
+            buy_accel_at_max(monaco, state, ACCEL_FLOOR * blitz_accel_pct / 100);
         }
     }
 
     function onTurnFinish(Monaco monaco, TurnState memory state) internal virtual {
         accel_with_remaining_budget_for_turn(monaco, state);
-    }
-
-    //
-    // constants
-    //
-
-    /// during hodl strat, how much of turn's budget to spend
-    function hodl_target_spend_pct() internal view virtual returns (uint256) {
-        return 90;
-    }
-
-    /// during blitz strat, how much of turn's budget to spend
-    function blitz_accel_mul() internal view virtual returns (uint256) {
-        return 3;
-    }
-
-    /// during lag strat, how much of turn's budget to spend
-    /// in percentage
-    function lag_target_spend_pct() internal view virtual returns (uint256) {
-        return 90;
     }
 }
