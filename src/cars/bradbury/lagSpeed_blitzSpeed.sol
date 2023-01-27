@@ -9,7 +9,7 @@ contract BradburyLagSpeedBlitzSpeed is BradburyBase {
     using SafeCastLib for uint256;
 
     constructor()
-        BradburyBase(Params({beg_accel_mul: 2, lag_accel_mul: 6, lag_banana_pct: 120, hodl_banana_pct: 120}))
+        BradburyBase(Params({beg_accel_pct: 200, lag_accel_pct: 600, lag_banana_pct: 120, hodl_banana_pct: 120}))
     {}
 
     function blitz_accel_mul() internal view override returns (uint256) {

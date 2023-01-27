@@ -9,7 +9,7 @@ contract BradburyV1 is BradburyBase {
     using SafeCastLib for uint256;
 
     constructor()
-        BradburyBase(Params({beg_accel_mul: 5, lag_accel_mul: 0, lag_banana_pct: 120, hodl_banana_pct: 120}))
+        BradburyBase(Params({beg_accel_pct: 500, lag_accel_pct: 0, lag_banana_pct: 120, hodl_banana_pct: 120}))
     {}
 
     function sayMyName() external pure returns (string memory) {

@@ -32,24 +32,24 @@ abstract contract BradburyBase is BaseCar {
     }
 
     struct Params {
-        uint256 beg_accel_mul;
-        uint256 lag_accel_mul;
+        uint256 beg_accel_pct;
+        uint256 lag_accel_pct;
         uint256 lag_banana_pct;
         uint256 hodl_banana_pct;
     }
 
     /// beginning of turn, % from accel floor price we're willing to take
-    uint256 public immutable beg_accel_mul;
+    uint256 public immutable beg_accel_pct;
     /// lag strat, % from accel floor price we're willing to take
-    uint256 public immutable lag_accel_mul;
+    uint256 public immutable lag_accel_pct;
     /// lag strat, % from accel floor price we're willing to take
     uint256 public immutable lag_banana_pct;
     /// hodl strat, % from banana floor price we're willing to take
     uint256 public immutable hodl_banana_pct;
 
     constructor(Params memory params) {
-        beg_accel_mul = params.beg_accel_mul;
-        lag_accel_mul = params.lag_accel_mul;
+        beg_accel_pct = params.beg_accel_pct;
+        lag_accel_pct = params.lag_accel_pct;
         lag_banana_pct = params.lag_banana_pct;
         hodl_banana_pct = params.hodl_banana_pct;
     }
@@ -130,14 +130,14 @@ abstract contract BradburyBase is BaseCar {
             state.speed += 11;
         }
 
-        buy_accel_at_max(monaco, state, ACCEL_FLOOR * beg_accel_mul);
+        buy_accel_at_max(monaco, state, ACCEL_FLOOR * beg_accel_pct / 100);
     }
 
     function onStratLag(Monaco monaco, TurnState memory state) internal virtual {
         uint256 self_next_pos = state.self.y + state.self.speed;
         uint256 other_next_pos = state.front_car.y + state.front_car.speed;
 
-        buy_accel_at_max(monaco, state, ACCEL_FLOOR * lag_accel_mul);
+        buy_accel_at_max(monaco, state, ACCEL_FLOOR * lag_accel_pct / 100);
 
         // if is accel expensive, and next guy is too fast or too far in front?
         // TODO tweak this value?
