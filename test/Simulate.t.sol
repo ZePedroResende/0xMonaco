@@ -20,15 +20,15 @@ contract SimulateTest is Test {
         //  input[0] = "PermaShield.sol";
         //  input[2] = "Floor.sol";
         //  input[3] = "ThePackage.sol";
-        input[0] = "B_biggerAccelFloor.sol:BradburyBigAccelFloor";
-        input[1] = "B_biggerEndBudget.sol:BradburyBiggerEndBudget";
-        input[2] = "B_goBananas.sol:BradburyGoBananas";
-        input[3] = "B_moreSpeedInBlitz.sol:BradburySpeedInBlitz";
-        input[4] = "Bradbury.sol:Bradbury";
-        input[5] = "B_smallerEndBudget.sol:BradburySmallerEndBudget";
-        input[6] = "B_evenBiggerAccelFloor.sol:BradburyEvenBiggerAccelFloor";
-        input[7] = "BiggerBetterBradbury.sol:BiggerBetterBradbury ";
-        input[8] = "B_lagSpeed_blitzSpeed.sol:BradburyLagSpeedBlitzSpeed ";
+        input[0] = "v1.sol:BradburyV1";
+        input[1] = "biggerEndBudget.sol:BradburyBiggerEndBudget";
+        input[2] = "goBananas.sol:BradburyGoBananas";
+        input[3] = "moreSpeedInBlitz.sol:BradburySpeedInBlitz";
+        input[4] = "v0.sol:BradburyV0";
+        input[5] = "smallerEndBudget.sol:BradburySmallerEndBudget";
+        input[6] = "evenBiggerAccelFloor.sol:BradburyEvenBiggerAccelFloor";
+        input[7] = "biggerBetter.sol:BradburyBiggerBetter";
+        input[8] = "lagSpeed_blitzSpeed.sol:BradburyLagSpeedBlitzSpeed";
         //        input[6] = "ExampleCar.sol";
         //        input[7] = "Saucepoint.sol:Sauce";
 
