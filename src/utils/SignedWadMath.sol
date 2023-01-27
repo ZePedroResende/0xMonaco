@@ -37,9 +37,7 @@ function wadMul(int256 x, int256 y) pure returns (int256 r) {
         r := mul(x, y)
 
         // Equivalent to require(x == 0 || (x * y) / x == y)
-        if iszero(or(iszero(x), eq(sdiv(r, x), y))) {
-            revert(0, 0)
-        }
+        if iszero(or(iszero(x), eq(sdiv(r, x), y))) { revert(0, 0) }
 
         // Scale the result down by 1e18.
         r := sdiv(r, 1000000000000000000)
@@ -52,9 +50,7 @@ function wadDiv(int256 x, int256 y) pure returns (int256 r) {
         r := mul(x, 1000000000000000000)
 
         // Equivalent to require(y != 0 && ((x * 1e18) / 1e18 == x))
-        if iszero(and(iszero(iszero(y)), eq(sdiv(r, 1000000000000000000), x))) {
-            revert(0, 0)
-        }
+        if iszero(and(iszero(iszero(y)), eq(sdiv(r, 1000000000000000000), x))) { revert(0, 0) }
 
         // Divide r by y.
         r := sdiv(r, y)
@@ -119,10 +115,7 @@ function wadExp(int256 x) pure returns (int256 r) {
         // * the 1e18 / 2**96 factor for base conversion.
         // We do this all at once, with an intermediate result in 2**213
         // basis, so the final right shift is always by a positive amount.
-        r = int256(
-            (uint256(r) * 3822833074963236453042738258902158003155416615667) >>
-                uint256(195 - k)
-        );
+        r = int256((uint256(r) * 3822833074963236453042738258902158003155416615667) >> uint256(195 - k));
     }
 }
 
@@ -189,9 +182,7 @@ function wadLn(int256 x) pure returns (int256 r) {
         // mul s * 5e18 * 2**96, base is now 5**18 * 2**192
         r *= 1677202110996718588342820967067443963516166;
         // add ln(2) * k * 5e18 * 2**192
-        r +=
-            16597577552685614221487285958193947469193820559219878177908093499208371 *
-            k;
+        r += 16597577552685614221487285958193947469193820559219878177908093499208371 * k;
         // add ln(2**96 / 10**18) * 5e18 * 2**192
         r += 600920179829731861736702779321621459595472258049074101567377883020018308;
         // base conversion: mul 2**18 / 2**192

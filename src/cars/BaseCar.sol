@@ -5,9 +5,34 @@ import "./constants.sol";
 import "../Monaco.sol";
 import "../interfaces/ICar.sol";
 
-abstract contract BaseCar {
+abstract contract BaseCar is ICar {
     //
-    // aux
+    // constants
+    //
+    uint256 constant INITIAL_BALANCE = 17500;
+
+    uint256 constant ACCEL_FLOOR = 15;
+    uint256 constant SHELL_FLOOR = 200;
+    uint256 constant SUPER_SHELL_FLOOR = 300;
+    uint256 constant SHIELD_FLOOR = 400;
+    uint256 constant BANANA_FLOOR = 200;
+
+    //
+    // structs
+    //
+    struct TurnState {
+        bool leading;
+        uint256 speed;
+        uint256 initialBalance;
+        uint256 balance;
+        uint256 y;
+        uint256 pctLeft;
+        uint256 remainingTurns;
+        uint256 targetSpend;
+    }
+
+    //
+    // API
     //
     function try_finish_right_now(Monaco monaco, TurnState memory state) internal returns (bool finished) {
         uint256 remainingDist = 1000 - state.y;

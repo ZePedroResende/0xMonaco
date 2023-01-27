@@ -61,69 +61,69 @@ contract SimulateTest is Test {
         for (uint256 i = 0; i < input.length; i++) {
             for (uint256 j = 0; j < input.length; j++) {
                 for (uint256 k = 0; k < input.length; k++) {
-if (i != j && i != k && j != k) {
-                    console.log(string.concat(vm.toString(i), ",", vm.toString(j), ",", vm.toString(k), "\n"));
-                    uint256 snapshot = vm.snapshot();
+                    if (i != j && i != k && j != k) {
+                        console.log(string.concat(vm.toString(i), ",", vm.toString(j), ",", vm.toString(k), "\n"));
+                        uint256 snapshot = vm.snapshot();
 
-                    monaco = new Monaco();
+                        monaco = new Monaco();
 
-                    address[] memory cars = new address[](3);
-                    uint256[] memory carToIndex = new uint[](3);
+                        address[] memory cars = new address[](3);
+                        uint256[] memory carToIndex = new uint[](3);
 
-                    address a = 0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF;
-                    address b = 0xdEAdBeEFDeadBeeFDEadbeefdEadBEeFDEADBEeE;
-                    address c = 0xDeaDbeefdeADbEeFDEAdbEeFDEADBEeFdeAdBeE1;
+                        address a = 0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF;
+                        address b = 0xdEAdBeEFDeadBeeFDEadbeefdEadBEeFDEADBEeE;
+                        address c = 0xDeaDbeefdeADbEeFDEAdbEeFDEADBEeFdeAdBeE1;
 
-                    deployContract(input[i], a);
-                    deployContract(input[j], b);
-                    deployContract(input[k], c);
+                        deployContract(input[i], a);
+                        deployContract(input[j], b);
+                        deployContract(input[k], c);
 
-                    cars[0] = a;
-                    cars[1] = b;
-                    cars[2] = c;
+                        cars[0] = a;
+                        cars[1] = b;
+                        cars[2] = c;
 
-                    carToIndex[0] = i;
-                    carToIndex[1] = j;
-                    carToIndex[2] = k;
+                        carToIndex[0] = i;
+                        carToIndex[1] = j;
+                        carToIndex[2] = k;
 
-                    for (uint256 p = 0; p < 3; p++) {
-                        monaco.register(ICar(cars[p]));
-                    }
+                        for (uint256 p = 0; p < 3; p++) {
+                            monaco.register(ICar(cars[p]));
+                        }
 
-                    uint256 lastTurn = 1;
-                    while (monaco.state() != Monaco.State.DONE) {
-                        monaco.play(1);
-                    }
+                        uint256 lastTurn = 1;
+                        while (monaco.state() != Monaco.State.DONE) {
+                            monaco.play(1);
+                        }
 
-                    Monaco.CarData[] memory allCarData = monaco.getAllCarData();
-
-                    vm.writeLine(
-                        "simulations/simulation.simulation",
-                        string.concat(
-                            vm.toString(carToIndex[0]),
-                            ",",
-                            vm.toString(carToIndex[1]),
-                            ",",
-                            vm.toString(carToIndex[2]),
-                            "\n"
-                        )
-                    );
-                    for (uint256 p = 0; p < allCarData.length; p++) {
-                        Monaco.CarData memory car = allCarData[p];
-
-                        // Add car data to the current turn
-                        uint256 carIndex = getCarIndex(cars, address(car.car));
+                        Monaco.CarData[] memory allCarData = monaco.getAllCarData();
 
                         vm.writeLine(
                             "simulations/simulation.simulation",
-                            string.concat(vm.toString(car.y), ",", vm.toString(carToIndex[carIndex]))
+                            string.concat(
+                                vm.toString(carToIndex[0]),
+                                ",",
+                                vm.toString(carToIndex[1]),
+                                ",",
+                                vm.toString(carToIndex[2]),
+                                "\n"
+                            )
                         );
+                        for (uint256 p = 0; p < allCarData.length; p++) {
+                            Monaco.CarData memory car = allCarData[p];
+
+                            // Add car data to the current turn
+                            uint256 carIndex = getCarIndex(cars, address(car.car));
+
+                            vm.writeLine(
+                                "simulations/simulation.simulation",
+                                string.concat(vm.toString(car.y), ",", vm.toString(carToIndex[carIndex]))
+                            );
+                        }
+
+                        vm.writeLine("simulations/simulation.simulation", "-----");
+
+                        vm.revertTo(snapshot);
                     }
-
-                    vm.writeLine("simulations/simulation.simulation", "-----");
-
-                    vm.revertTo(snapshot);
-                }
                 }
             }
         }

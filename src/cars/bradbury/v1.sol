@@ -1,32 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.17;
 
-import "./../interfaces/ICar.sol";
 import "solmate/utils/SafeCastLib.sol";
-import "./constants.sol";
-import {BaseCar} from "./BaseCar.sol";
+import {Monaco} from "../../Monaco.sol";
+import {BradburyBase} from "./Base.sol";
 
-contract BradburySpeedInBlitz is ICar, BaseCar {
+contract BradburyV1 is BradburyBase {
     using SafeCastLib for uint256;
-
-    uint256 internal constant LATE_GAME = 600;
-    uint256 internal constant BLITZKRIEG = 800; // all-out spending
-    uint256 internal constant INITIAL_BALANCE = 17500;
-
-    uint256 internal constant INIT_ACCEL_COST = 12;
-    uint256 internal constant ACCEL_HODL_MUL = 5;
-    uint256 internal constant ACCEL_BLITZKRIEG_MUL = 10;
-
-    //
-    // in Lag mode, we're in 3rd position
-    //
-    // we value speed highly if we're too far from the 2nd
-    uint256 internal constant LAG_PREMIUM_TOO_FAR = 30;
-    // we value speed even more highly if we're near but going slower
-    // how much extra we're willing to spend per accel if we're near 2nd but slower
-    uint256 internal constant LAG_PREMIUM_NEAR_BUT_SLOWER = 3;
-    // how much distance we want at most from the 2nd player
-    uint256 internal constant LAG_MAX_DESIRED_SPACING = 20;
 
     function takeYourTurn(
         Monaco monaco,
@@ -91,7 +71,7 @@ contract BradburySpeedInBlitz is ICar, BaseCar {
 
         // priority: try to sweep floor on acceleration
         // TODO adjust this value
-      buy_accel_at_max(monaco, state, ACCEL_FLOOR * 2);
+        buy_accel_at_max(monaco, state, ACCEL_FLOOR * 5);
 
         if (strat == Strat.LAG) {
             //
@@ -106,12 +86,12 @@ contract BradburySpeedInBlitz is ICar, BaseCar {
                 if ((front_car.speed > self.speed + 8 || (front_car.speed > 1 && other_next_pos > self_next_pos + 50)))
                 {
                     // nuke 'em hard
-                  maybe_buy_any_shell_kind(monaco, state, SHELL_FLOOR * 5, front_car);
+                    maybe_buy_any_shell_kind(monaco, state, SHELL_FLOOR * 5, front_car);
                 } else if (
                     (front_car.speed > self.speed + 2 || (front_car.speed > 1 && other_next_pos > self_next_pos + 20))
                 ) {
                     // nuke 'em, but not so hard
-                  maybe_buy_any_shell_kind(monaco, state, SHELL_FLOOR * 3, front_car);
+                    maybe_buy_any_shell_kind(monaco, state, SHELL_FLOOR * 3, front_car);
                 }
             }
 
@@ -122,19 +102,19 @@ contract BradburySpeedInBlitz is ICar, BaseCar {
             if (self_index == 1 && self.speed > 10) {
                 //   2nd and is a banana worth it?.maybe buy one?
                 //   if no banana, is a shield VERY cheap?.maybe buy one?
-                uint256 bought =maybe_banana(monaco, state, BANANA_FLOOR * 12 / 10);
+                uint256 bought = maybe_banana(monaco, state, BANANA_FLOOR * 12 / 10);
 
                 if (bought == 0) {
-                  maybe_buy_shield(monaco, state, 1, SHIELD_FLOOR / 2);
+                    maybe_buy_shield(monaco, state, 1, SHIELD_FLOOR / 2);
                 }
-              aggressive_shell_gouging(monaco, state);
+                aggressive_shell_gouging(monaco, state);
             }
         } else if (strat == Strat.HODL) {
             //
             // HODL strat
             //
-          maybe_banana(monaco, state, BANANA_FLOOR * 12 / 10);
-          aggressive_shell_gouging(monaco, state);
+            maybe_banana(monaco, state, BANANA_FLOOR * 12 / 10);
+            aggressive_shell_gouging(monaco, state);
             // get the cost of banana, save that money
             //.aggresive gouging of shells & super shells up to floor * 2
             // buy a banana, *after the shells*
@@ -142,17 +122,17 @@ contract BradburySpeedInBlitz is ICar, BaseCar {
             //
             // BLITZKRIEG strat
             //
-            if (BaseCar.try_finish_right_now(monaco, state)) return;
+            if (try_finish_right_now(monaco, state)) return;
 
             //.buy_accel_at_max(monaco, state, ACCEL_FLOOR * ACCEL_BLITZKRIEG_MUL);
 
             // TODO
             if (self_index != 0) {
                 // priority 1, buy a shell or supershell if we're not first, and if the first is not shielded
-              maybe_buy_any_shell_kind(monaco, state, SHELL_FLOOR * 5, front_car);
+                maybe_buy_any_shell_kind(monaco, state, SHELL_FLOOR * 5, front_car);
             }
 
-            uint256 shields_needed =compute_shields_needed(monaco, self_index, allCars, back_car);
+            uint256 shields_needed = compute_shields_needed(monaco, self_index, allCars, back_car);
 
             // if we're 1st, we skip the condition "if we're close to the front car"
             uint256 distance_to_front_car = type(uint256).max;
@@ -162,25 +142,25 @@ contract BradburySpeedInBlitz is ICar, BaseCar {
 
             // if we can finish in the next 3 rounds, invest in a shield
             if (self.y + self.speed * 3 >= 1000) {
-              maybe_buy_shield(monaco, state, shields_needed, SHIELD_FLOOR * 5);
-              tiny_gouge_super_shell(monaco, state, SHIELD_FLOOR * 5);
+                maybe_buy_shield(monaco, state, shields_needed, SHIELD_FLOOR * 5);
+                tiny_gouge_super_shell(monaco, state, SHIELD_FLOOR * 5);
             }
 
             // if we're in first, and 2nd is faster, slow him down
             if (self_index == 0 && back_car.speed > self.speed) {
-              maybe_banana(monaco, state, BANANA_FLOOR * 2);
+                maybe_banana(monaco, state, BANANA_FLOOR * 2);
             }
 
             // try to maintain some speed if we're slow
-            if (self.speed < 20) {
-              buy_accel_at_max(monaco, state, ACCEL_FLOOR * 5);
+            if (self.speed < 10) {
+                buy_accel_at_max(monaco, state, ACCEL_FLOOR * 3);
             }
         }
 
-      accel_with_remaining_budget_for_turn(monaco, state);
+        accel_with_remaining_budget_for_turn(monaco, state);
     }
 
     function sayMyName() external pure returns (string memory) {
-        return "Bradbury_speedInBlitz";
+        return "Bradbury-v1";
     }
 }
