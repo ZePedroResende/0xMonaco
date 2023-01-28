@@ -13,12 +13,12 @@ import {PermaShield} from "../src/cars/samples/PermaShield.sol";
 import {Sauce} from "../src/cars/samples/Saucepoint.sol";
 import {MadCar} from "../src/cars/samples/MadCar.sol";
 import {Floor} from "../src/cars/samples/Floor.sol";
-import {Bradbury} from "../src/cars/Bradbury.sol";
-import {BradburyBigAccelFloor} from "../src/cars/B_biggerAccelFloor.sol";
-import {BradburyBiggerEndBudget} from "../src/cars/B_biggerEndBudget.sol";
-import {BradburyGoBananas} from "../src/cars/B_goBananas.sol";
-import {BradburySpeedInBlitz} from "../src/cars/B_moreSpeedInBlitz.sol";
-import {BradburyEvenBiggerAccelFloor} from "../src/cars/B_evenBiggerAccelFloor.sol";
+import {BradburyV0} from "../src/cars/bradbury/v0.sol";
+import {BradburyV1} from "../src/cars/bradbury/v1.sol";
+import {BradburyBiggerEndBudget} from "../src/cars/bradbury/biggerEndBudget.sol";
+import {BradburyGoBananas} from "../src/cars/bradbury/goBananas.sol";
+import {BradburySpeedInBlitz} from "../src/cars/bradbury/moreSpeedInBlitz.sol";
+import {BradburyEvenBiggerAccelFloor} from "../src/cars/bradbury/evenBiggerAccelFloor.sol";
 
 uint256 constant CAR_LEN = 3;
 uint256 constant ABILITY_LEN = 5;
@@ -54,7 +54,7 @@ contract MonacoTest is Test {
     }
 
     function testGames() public {
-        ICar w1 = new BradburyBigAccelFloor();
+        ICar w1 = new BradburyV1();
         ICar w2 = new BradburyBiggerEndBudget();
         ICar w3 = new BradburyEvenBiggerAccelFloor();
         names[w1] = " BigAccelFloor";

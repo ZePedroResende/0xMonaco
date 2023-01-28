@@ -143,7 +143,7 @@ contract Sauce is ICar {
 
         if (action.accelerate != 0) monaco.buyAcceleration(action.accelerate);
         if (action.shell != 0) {
-            if (ourCarIndex != 0) { 
+            if (ourCarIndex != 0) {
                 if (0 < leadCar.shield) {
                     action.shell++;
                 }
@@ -152,7 +152,7 @@ contract Sauce is ICar {
         }
         if (action.shield != 0) monaco.buyShield(action.shield);
         if (action.superShell != 0) {
-            if (ourCarIndex != 0) { 
+            if (ourCarIndex != 0) {
                 if (0 < leadCar.shield) {
                     action.superShell++;
                 }

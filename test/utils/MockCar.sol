@@ -25,26 +25,31 @@ contract MockCar is ICar {
         idle = true;
     }
 
-    function takeYourTurn(Monaco monaco, Monaco.CarData[] calldata /*allCars*/, uint256[] calldata /*bananas*/, uint256 /*ourCarIndex*/) external override {
+    function takeYourTurn(
+        Monaco monaco,
+        Monaco.CarData[] calldata, /*allCars*/
+        uint256[] calldata, /*bananas*/
+        uint256 /*ourCarIndex*/
+    ) external override {
         // Do nothing if we`re in idle mode
         if (idle) {
             emit Idle(address(this));
             return;
         }
 
-        if(actionType == Monaco.ActionType.ACCELERATE){
+        if (actionType == Monaco.ActionType.ACCELERATE) {
             monaco.buyAcceleration(amount);
-        } else  if(actionType == Monaco.ActionType.SHELL){
+        } else if (actionType == Monaco.ActionType.SHELL) {
             monaco.buyShell(amount);
-        } else  if(actionType == Monaco.ActionType.SUPER_SHELL){
+        } else if (actionType == Monaco.ActionType.SUPER_SHELL) {
             monaco.buySuperShell(amount);
-        } else if(actionType == Monaco.ActionType.BANANA){
+        } else if (actionType == Monaco.ActionType.BANANA) {
             monaco.buyBanana();
-        } else if(actionType == Monaco.ActionType.SHIELD){
+        } else if (actionType == Monaco.ActionType.SHIELD) {
             monaco.buyShield(amount);
         }
 
-        emit Action(address(this),actionType,amount);
+        emit Action(address(this), actionType, amount);
 
         // Mark as idle after we play our move
         setIdle();

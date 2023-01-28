@@ -10,7 +10,7 @@ contract PermaShield is ICar {
         uint256[] calldata, /*bananas*/
         uint256 ourCarIndex
     ) external {
-        if (monaco.getShieldCost(1) < 500) { 
+        if (monaco.getShieldCost(1) < 500) {
             monaco.buyShield(1);
         }
         if (monaco.getAccelerateCost(1) < 800) {
