@@ -4,7 +4,7 @@ pragma solidity 0.8.17;
 import "../Monaco.sol";
 
 interface ICar {
-    function sayMyName() external pure returns (string memory);
+    function sayMyName() external view returns (string memory);
 
     function takeYourTurn(
         Monaco monaco,

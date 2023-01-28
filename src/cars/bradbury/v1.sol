@@ -1,15 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.17;
 
-import "solmate/utils/SafeCastLib.sol";
 import {Monaco} from "../../Monaco.sol";
 import {BradburyBase} from "./Base.sol";
 
 contract BradburyV1 is BradburyBase {
-    using SafeCastLib for uint256;
-
     constructor()
         BradburyBase(
+            "v1",
             Params({
                 first_turn_accel: 11,
                 beg_accel_pct: 500,
@@ -22,8 +20,4 @@ contract BradburyV1 is BradburyBase {
             })
         )
     {}
-
-    function sayMyName() external pure returns (string memory) {
-        return "Bradbury-v1";
-    }
 }

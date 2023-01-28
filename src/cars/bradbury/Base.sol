@@ -57,8 +57,10 @@ abstract contract BradburyBase is BaseCar {
     uint256 public immutable hodl_banana_pct;
     uint256 public immutable hodl_target_spend_pct;
     uint256 public immutable blitz_accel_pct;
+    string name;
 
-    constructor(Params memory params) {
+    constructor(string memory name, Params memory params) {
+        name = string.concat("Bradbury-", name);
         first_turn_accel = params.first_turn_accel;
         beg_accel_pct = params.beg_accel_pct;
         lag_accel_pct = params.lag_accel_pct;
@@ -232,5 +234,9 @@ abstract contract BradburyBase is BaseCar {
 
     function onTurnFinish(Monaco monaco, TurnState memory state) internal virtual {
         accel_with_remaining_budget_for_turn(monaco, state);
+    }
+
+    function sayMyName() external view returns (string memory) {
+        return name;
     }
 }

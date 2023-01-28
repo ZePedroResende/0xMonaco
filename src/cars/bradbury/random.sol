@@ -1,19 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.17;
 
-import "solmate/utils/SafeCastLib.sol";
 import {Monaco} from "../../Monaco.sol";
 import {BradburyBase} from "./Base.sol";
 
-contract BradburyV0 is BradburyBase {
-    using SafeCastLib for uint256;
-
+contract BradburyV2_001 is BradburyBase {
     constructor()
         BradburyBase(
-            "v0",
+            "v2-001",
             Params({
-                first_turn_accel: 11,
-                beg_accel_pct: 200,
+                first_turn_accel: 0,
+                beg_accel_pct: 500,
                 lag_accel_pct: 0,
                 lag_banana_pct: 120,
                 lag_target_spend_pct: 90,
