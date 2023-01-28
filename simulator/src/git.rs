@@ -34,10 +34,13 @@ pub fn download_git_files() {
         let ssh_key_password = ssh_key_password.trim();
         //Cred::ssh_key("git",Some(Path::new("/home/resende/.ssh/id_ed25519.pub")),
         //    Path::new("/home/resende/.ssh/id_ed25519"),  Some(ssh_key_password))
+        let pub_key_path = std::env::var("PUB_KEY_PATH").expect("Failed to load pub key path");
+        let priv_key_path = std::env::var("PRIV_KEY_PATH").expect("Failed to load pub key path");
         Cred::ssh_key(
             "git",
-            Some(Path::new("/home/resende/.ssh/id_rsa.pub")),
-            Path::new("/home/resende/.ssh/id_rsa"),
+            Some(Path::new(&pub_key_path)),
+            Path::new(&priv_key_path),
+                
             Some(ssh_key_password),
         )
     });
