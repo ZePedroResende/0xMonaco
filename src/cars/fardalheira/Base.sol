@@ -4,7 +4,7 @@ pragma solidity 0.8.17;
 import {Monaco} from "../../Monaco.sol";
 import {BaseCar} from "../BaseCar.sol";
 
-abstract contract BradburyBase is BaseCar {
+abstract contract FardalheiraBase is BaseCar {
     //
     // constants
     //
@@ -57,7 +57,7 @@ abstract contract BradburyBase is BaseCar {
     string name;
 
     constructor(string memory _name, Params memory params) {
-        name = string.concat("Bradbury-", _name);
+        name = string.concat("Fardalheira-", _name);
         first_turn_accel = params.first_turn_accel;
         beg_accel_pct = params.beg_accel_pct;
         lag_accel_pct = params.lag_accel_pct;
@@ -100,35 +100,34 @@ abstract contract BradburyBase is BaseCar {
         });
         Strat strat;
 
+        /// how much left until blitz starts, or until race ends
+        uint256 remainingDistance = strat == Strat.BLITZKRIEG ? (1000 - state.self.y) : (BLITZKRIEG - state.self.y);
+        /// that distance in turns, based on current speed. if we're stopped, then we assume speed=1
+        state.remainingTurns = self.speed > 0 ? (remainingDistance) / (self.speed > 0 ? self.speed : 1) : 1000;
+
         if (allCars[0].y >= BLITZKRIEG) {
             // leader is almost at the end! blitzkrieg regardless
             // of if the leader is us or someone else
             strat = Strat.BLITZKRIEG;
-
             // we spend 100% of our budget per turn
-            state.remainingTurns = self.speed > 0 ? (1000 - self.y) / self.speed : 1000;
-            if (state.remainingTurns == 0) state.remainingTurns = 1;
             state.targetSpend = state.initialBalance / state.remainingTurns;
-        } else if (self_index == 0) {
-            // we're in 1st, try to hold our position
+        } else if (self_index <= 1) {
+            // we're in 1st or 2nd, conserve energy
             strat = Strat.HODL;
 
             // try and spend 70% of our per-turn budget
             // leave some overhead for blitzkrieg
-            state.remainingTurns = self.speed > 0 ? (800 - self.y) / self.speed : 800;
-            if (state.remainingTurns == 0) state.remainingTurns = 1;
             state.targetSpend = state.initialBalance / state.remainingTurns * hodl_target_spend_pct / 100;
         } else {
-            // we're in 2nd or 3rd, lag behind the next car
+            // we're in 3rd, lag behind the next car
             strat = Strat.LAG;
-            front_car = allCars[self_index - 1];
 
-            state.remainingTurns = self.speed > 0 ? (800 - self.y) / self.speed : 800;
-            if (state.remainingTurns == 0) state.remainingTurns = 1;
             state.targetSpend = state.initialBalance / state.remainingTurns * lag_target_spend_pct / 100;
         }
 
         onTurnBeginning(monaco, state);
+        if (nobudget(state)) return;
+
         if (strat == Strat.LAG) {
             onStratLag(monaco, state);
         } else if (strat == Strat.HODL) {
@@ -139,14 +138,14 @@ abstract contract BradburyBase is BaseCar {
         onTurnFinish(monaco, state);
     }
 
-    function stratDecider_original(TurnState memory state) internal virtual {}
-
     function onTurnBeginning(Monaco monaco, TurnState memory state) internal virtual {
         if (monaco.turns() == 1 && first_turn_accel > 0) {
             // we have 1st move advantage
             state.balance -= monaco.buyAcceleration(first_turn_accel);
             state.speed += first_turn_accel;
         }
+
+        if (nobudget(state)) return;
 
         buy_accel_at_max(monaco, state, ACCEL_FLOOR * beg_accel_pct / 100);
     }
@@ -156,6 +155,8 @@ abstract contract BradburyBase is BaseCar {
         uint256 other_next_pos = state.front_car.y + state.front_car.speed;
 
         buy_accel_at_max(monaco, state, ACCEL_FLOOR * lag_accel_pct / 100);
+
+        if (nobudget(state)) return;
 
         // if is accel expensive, and next guy is too fast or too far in front?
         // TODO tweak this value?
@@ -179,7 +180,7 @@ abstract contract BradburyBase is BaseCar {
             }
         }
 
-        // TODO do we want to check our budget here?
+        if (nobudget(state)) return;
 
         // if we're in second and we have speed?
         // TODO tweak this value
@@ -191,13 +192,13 @@ abstract contract BradburyBase is BaseCar {
             if (bought == 0) {
                 maybe_buy_shield(monaco, state, 1, SHIELD_FLOOR / 2);
             }
-            aggressive_shell_gouging(monaco, state);
+            aggressive_shell_gouging_within_budget(monaco, state);
         }
     }
 
     function onStratHodl(Monaco monaco, TurnState memory state) internal virtual {
         maybe_banana(monaco, state, BANANA_FLOOR * hodl_banana_pct / 100);
-        aggressive_shell_gouging(monaco, state);
+        aggressive_shell_gouging_within_budget(monaco, state);
     }
 
     function onStratBlitzkrieg(Monaco monaco, TurnState memory state) internal virtual {
@@ -221,11 +222,13 @@ abstract contract BradburyBase is BaseCar {
             maybe_buy_shield(monaco, state, shields_needed, SHIELD_FLOOR * 5);
             tiny_gouge_super_shell(monaco, state, SHIELD_FLOOR * 5);
         }
+        if (nobudget(state)) return;
 
         // if we're in first, and 2nd is faster, slow him down
         if (state.self_index == 0 && state.back_car.speed > state.self.speed) {
             maybe_banana(monaco, state, BANANA_FLOOR * 2);
         }
+        if (nobudget(state)) return;
 
         // try to maintain some speed if we're slow
         if (state.self.speed < 10) {
@@ -234,7 +237,55 @@ abstract contract BradburyBase is BaseCar {
     }
 
     function onTurnFinish(Monaco monaco, TurnState memory state) internal virtual {
-        accel_with_remaining_budget_for_turn(monaco, state);
+        if (state.strat == Strat.BLITZKRIEG) {
+            accel_with_remaining_budget_for_turn(monaco, state);
+        }
+    }
+
+    /// if we're in blitz, budget is unlimited
+    /// otherwise, try to keep it below the target
+    function nobudget(TurnState memory state) internal virtual returns (bool) {
+        if (state.strat == Strat.BLITZKRIEG) {
+            return false;
+        }
+
+        return state.targetSpend <= state.spent;
+    }
+
+    function aggressive_shell_gouging_within_budget(Monaco monaco, TurnState memory state) internal {
+        while (true) {
+            if (nobudget(state)) return;
+
+            uint256 shellPrice = monaco.getShellCost(1);
+            uint256 superShellPrice = monaco.getSuperShellCost(1);
+
+            if (shellPrice < superShellPrice && shellPrice < SHELL_FLOOR * 2) {
+                monaco.buyShell(1);
+                state.balance -= shellPrice;
+                state.spent += shellPrice;
+            } else if (superShellPrice <= shellPrice && superShellPrice < SHELL_FLOOR * 2) {
+                monaco.buySuperShell(1);
+                state.balance -= superShellPrice;
+                state.spent += superShellPrice;
+            } else {
+                break;
+            }
+        }
+    }
+
+    function tiny_gouge_super_shell_within_budget(Monaco monaco, TurnState memory state) internal {
+        while (true) {
+            if (nobudget(state)) return;
+            uint256 superShellPrice = monaco.getSuperShellCost(1);
+
+            if (superShellPrice < state.balance) {
+                monaco.buySuperShell(1);
+                state.balance -= superShellPrice;
+                state.spent += superShellPrice;
+            } else {
+                break;
+            }
+        }
     }
 
     function sayMyName() external view returns (string memory) {

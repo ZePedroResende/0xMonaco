@@ -20,7 +20,14 @@ abstract contract BaseCar is ICar {
     //
     // structs
     //
+    enum Strat {
+        LAG, // stick to 3rd place, but close enough to 2nd car
+        HODL, // hold your spot
+        BLITZKRIEG // all out war
+    }
+
     struct TurnState {
+        Strat strat;
         bool leading;
         uint256 speed;
         uint256 initialBalance;
@@ -29,6 +36,7 @@ abstract contract BaseCar is ICar {
         uint256 pctLeft;
         uint256 remainingTurns;
         uint256 targetSpend;
+        uint256 spent;
         uint256 self_index;
         Monaco.CarData self;
         Monaco.CarData front_car;
@@ -82,6 +90,7 @@ abstract contract BaseCar is ICar {
             monaco.buyAcceleration(1);
             state.speed += 1;
             state.balance -= cost;
+            state.spent += cost;
         }
     }
 
@@ -101,9 +110,11 @@ abstract contract BaseCar is ICar {
         if (super_shell_cost < shell_cost * 15 / 10 && super_shell_cost < budget && super_shell_cost < state.balance) {
             monaco.buySuperShell(1);
             state.balance -= super_shell_cost;
+            state.spent += super_shell_cost;
         } else if (shell_cost < budget && front_car.shield == 0 && shell_cost < state.balance) {
             monaco.buyShell(1);
             state.balance -= shell_cost;
+            state.spent += shell_cost;
         }
     }
 
@@ -113,18 +124,19 @@ abstract contract BaseCar is ICar {
         if (cost <= price && state.balance >= cost) {
             monaco.buyBanana();
             state.balance -= cost;
+            state.spent += cost;
             return 1;
         }
         return 0;
     }
 
     function maybe_buy_shield(Monaco monaco, TurnState memory state, uint256 max_shields, uint256 price) internal {
-        // TODO this should be `max_shields` instead of shields_needed
-        uint256 cost = monaco.getShieldCost(1);
+        uint256 cost = monaco.getShieldCost(max_shields);
 
         if (cost <= price * 1 && state.balance >= cost) {
-            monaco.buyShield(1);
+            monaco.buyShield(max_shields);
             state.balance -= cost;
+            state.spent += cost;
         }
     }
 
@@ -138,6 +150,7 @@ abstract contract BaseCar is ICar {
             budget -= cost;
             state.speed += 1;
             state.balance -= cost;
+            state.spent += cost;
         }
     }
 
@@ -159,18 +172,20 @@ abstract contract BaseCar is ICar {
                 monaco.buyShell(1);
                 budget -= shellPrice;
                 state.balance -= shellPrice;
+                state.spent += shellPrice;
             } else if (superShellPrice <= shellPrice && superShellPrice <= budget && superShellPrice < SHELL_FLOOR * 2)
             {
                 monaco.buySuperShell(1);
                 budget -= superShellPrice;
                 state.balance -= superShellPrice;
+                state.spent += superShellPrice;
             } else {
                 break;
             }
         }
     }
 
-    function tiny_gouge_super_shell(Monaco monaco, TurnState memory state, uint256 budget) internal {
+    function tiny_gouge_super_shell(Monaco monaco, TurnState memory state, uint256 /*budget*/ ) internal {
         uint256 budget = state.initialBalance - state.balance;
 
         while (true) {
@@ -180,6 +195,7 @@ abstract contract BaseCar is ICar {
                 monaco.buySuperShell(1);
                 budget -= superShellPrice;
                 state.balance -= superShellPrice;
+                state.spent += superShellPrice;
             } else {
                 break;
             }
