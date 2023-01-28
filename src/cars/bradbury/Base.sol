@@ -32,6 +32,7 @@ abstract contract BradburyBase is BaseCar {
     }
 
     struct Params {
+        uint256 first_turn_accel;
         /// beginning of turn, % from accel floor price we're willing to take
         uint256 beg_accel_pct;
         /// lag strat, % from accel floor price we're willing to take
@@ -48,6 +49,7 @@ abstract contract BradburyBase is BaseCar {
         uint256 blitz_accel_pct;
     }
 
+    uint256 public immutable first_turn_accel;
     uint256 public immutable beg_accel_pct;
     uint256 public immutable lag_accel_pct;
     uint256 public immutable lag_banana_pct;
@@ -57,6 +59,7 @@ abstract contract BradburyBase is BaseCar {
     uint256 public immutable blitz_accel_pct;
 
     constructor(Params memory params) {
+        first_turn_accel = params.first_turn_accel;
         beg_accel_pct = params.beg_accel_pct;
         lag_accel_pct = params.lag_accel_pct;
         lag_banana_pct = params.lag_banana_pct;
@@ -136,10 +139,10 @@ abstract contract BradburyBase is BaseCar {
     }
 
     function onTurnBeginning(Monaco monaco, TurnState memory state) internal virtual {
-        if (monaco.turns() == 1) {
+        if (monaco.turns() == 1 && first_turn_accel > 0) {
             // we have 1st move advantage
-            state.balance -= monaco.buyAcceleration(11);
-            state.speed += 11;
+            state.balance -= monaco.buyAcceleration(first_turn_accel);
+            state.speed += first_turn_accel;
         }
 
         buy_accel_at_max(monaco, state, ACCEL_FLOOR * beg_accel_pct / 100);

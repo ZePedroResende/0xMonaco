@@ -11,6 +11,7 @@ contract BradburyV1 is BradburyBase {
     constructor()
         BradburyBase(
             Params({
+                first_turn_accel: 11,
                 beg_accel_pct: 500,
                 lag_accel_pct: 0,
                 lag_banana_pct: 120,

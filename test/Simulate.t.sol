@@ -18,11 +18,9 @@ contract SimulateTest is Test {
         string name2;
     }
 
-
     function setUp() public {}
 
     function testSimulation() public {
-
         Monaco monaco;
         string[] memory input = new string[](9);
 
@@ -140,7 +138,10 @@ contract SimulateTest is Test {
         }
     }
 
-    function testSimulationByName(string memory car0Name, string memory car1Name, string memory car2Name) public returns (Out memory){
+    function testSimulationByName(string memory car0Name, string memory car1Name, string memory car2Name)
+        public
+        returns (Out memory)
+    {
         //string memory car0Name, string memory car1Name, string memory car2Name
 
         //string memory car0Name  = "B_biggerAccelFloor.sol:BradburyBigAccelFloor";
@@ -178,15 +179,17 @@ contract SimulateTest is Test {
 
         Monaco.CarData[] memory allCarData = monaco.getAllCarData();
 
-        Out memory out = Out(allCarData[0].y, carToName[getCarIndex(cars, address(allCarData[0].car))],
-                             allCarData[1].y, carToName[getCarIndex(cars, address(allCarData[1].car))],
-                             allCarData[2].y, carToName[getCarIndex(cars, address(allCarData[2].car))]
-                            );
+        Out memory out = Out(
+            allCarData[0].y,
+            carToName[getCarIndex(cars, address(allCarData[0].car))],
+            allCarData[1].y,
+            carToName[getCarIndex(cars, address(allCarData[1].car))],
+            allCarData[2].y,
+            carToName[getCarIndex(cars, address(allCarData[2].car))]
+        );
 
-                            return out;
+        return out;
     }
-
-
 
     function getCarIndex(address[] memory cars, address car) private view returns (uint256) {
         for (uint256 i = 0; i < 3; ++i) {
