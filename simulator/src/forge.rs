@@ -165,43 +165,12 @@ where
     result.result
 }
 
-pub fn print_contract_files_and_names() -> (Vec<String>,Vec<String>) {
+pub fn print_contract_files_and_names() -> Vec<String> {
     let out = (*COMPILED)
         .clone()
         .output()
         .with_stripped_file_prefixes(PROJECT.root());
 
-    let what_matters: Vec<(String)> = out
-        .contracts_with_files_iter()
-        .filter(|(a, _, _)| a.contains("src/cars/bradbury") ||a.contains("src/cars/fardalheira") )
-        .filter(|(a, _, _)| !a.contains("src/cars/samples"))
-        .filter(|(a, _, _)| !a.contains("Base"))
-        .filter(|(a, _, _)| !a.contains("src/cars/Example"))
-        .map(|(a, b, _)| {
-            let a = if a.contains("older_version") {
-
-                a.strip_prefix("src/cars/older_version/").unwrap_or(a)
-
-            } else if a.contains("samples") {
-
-                a.strip_prefix("src/cars/samples/").unwrap_or(a)
-
-            } else if a.contains("src/cars/bradbury") {
-
-                a.strip_prefix("src/cars/bradbury/").unwrap_or(a)
-            
-            } else if a.contains("src/cars/fardalheira/") {
-
-                a.strip_prefix("src/cars/fardalheira/").unwrap_or(a)
-
-            } else {
-
-                a.strip_prefix("src/cars/").unwrap_or(a)
-
-            };
-            format!("{a}:{b}")
-        })
-        .collect();
 
     let sources: Vec<(String)> = out
         .contracts_with_files_iter()
@@ -235,5 +204,5 @@ pub fn print_contract_files_and_names() -> (Vec<String>,Vec<String>) {
         })
         .collect();
 
-    (what_matters,sources)
+    sources
 }

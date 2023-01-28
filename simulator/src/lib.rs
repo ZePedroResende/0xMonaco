@@ -13,23 +13,14 @@ use itertools::Itertools;
 
 type Out = (U256,String, U256,String, U256,String );
 pub fn run_simulation() {
-    let (filters,contracts): (Vec<String>, Vec<String>) = print_contract_files_and_names();
+    let contracts: Vec<String> = print_contract_files_and_names();
 
-//    let i = contracts .iter().filter(|x| *x.contains("Base")).unwrap();
-
-//    contracts.remove(i);
-//
-//    let i = contracts .iter().position(|x| *x == "Base.sol:BradburyBase").unwrap();
-//
-//    contracts.remove(i);
 
     println!("{:?}", contracts);
     let permutation  = contracts.into_iter().permutations(3).unique();
 
     permutation.par_bridge().for_each(move |v| {
-        if v.iter().any(|x| filters.contains(x)) {
-            run_test(&v);
-        }
+        run_test(&v);
     });
 
 }
