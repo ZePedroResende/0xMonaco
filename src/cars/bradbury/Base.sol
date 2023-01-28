@@ -128,7 +128,6 @@ abstract contract BradburyBase is BaseCar {
             state.targetSpend = state.initialBalance / state.remainingTurns * lag_target_spend_pct / 100;
         }
 
-        onTurnBeginning(monaco, state);
         if (strat == Strat.LAG) {
             onStratLag(monaco, state);
         } else if (strat == Strat.HODL) {
@@ -144,7 +143,9 @@ abstract contract BradburyBase is BaseCar {
     function onTurnBeginning(Monaco monaco, TurnState memory state) internal virtual {
         if (monaco.turns() == 1 && first_turn_accel > 0) {
             // we have 1st move advantage
-            state.balance -= monaco.buyAcceleration(first_turn_accel);
+            uint256 cost = monaco.buyAcceleration(first_turn_accel);
+            state.balance -= cost;
+            state.spent += cost;
             state.speed += first_turn_accel;
         }
 

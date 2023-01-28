@@ -53,6 +53,7 @@ abstract contract BaseCar is ICar {
             try monaco.getAccelerateCost(needed) returns (uint256 cost) {
                 if (cost <= state.balance) {
                     monaco.buyAcceleration(needed);
+                    state.balance = 0;
                     return true;
                 }
             } catch {}
@@ -155,7 +156,7 @@ abstract contract BaseCar is ICar {
     }
 
     function accel_with_remaining_budget_for_turn(Monaco monaco, TurnState memory state) internal {
-        uint256 spent = state.initialBalance - state.balance;
+        uint256 spent = state.spent;
         if (state.targetSpend > spent) {
             buy_accel_with_budget(monaco, state, state.targetSpend - spent);
         }
