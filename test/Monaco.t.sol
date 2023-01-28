@@ -19,6 +19,8 @@ import {BradburyBiggerEndBudget} from "../src/cars/bradbury/biggerEndBudget.sol"
 import {BradburyGoBananas} from "../src/cars/bradbury/goBananas.sol";
 import {BradburySpeedInBlitz} from "../src/cars/bradbury/moreSpeedInBlitz.sol";
 import {BradburyEvenBiggerAccelFloor} from "../src/cars/bradbury/evenBiggerAccelFloor.sol";
+import {BradburyBiggerBetter} from "../src/cars/bradbury/biggerBetter.sol";
+import {FardalheiraV0d} from "../src/cars/fardalheira/v0.sol";
 
 uint256 constant CAR_LEN = 3;
 uint256 constant ABILITY_LEN = 5;
@@ -54,12 +56,28 @@ contract MonacoTest is Test {
     }
 
     function testGames() public {
-        ICar w1 = new BradburyV1();
+        // crashed overflow : ("biggerBetter.sol:BradburyBiggerBetter", "biggerEndBudget.sol:BradburyBiggerEndBudget", "v0.sol:FardalheiraV0d"): Execution
+        // crashed overflow : ("biggerBetter.sol:BradburyBiggerBetter", "biggerEndBudget.sol:BradburyBiggerEndBudget", "v0.sol:FardalheiraV0b"): Execution
+        // crashed overflow : ("biggerBetter.sol:BradburyBiggerBetter", "biggerEndBudget.sol:BradburyBiggerEndBudget", "v0.sol:FardalheiraV0e"): Execution
+        // crashed overflow : ("biggerBetter.sol:BradburyBiggerBetter", "biggerEndBudget.sol:BradburyBiggerEndBudget", "v0.sol:FardalheiraV0f"): Execution
+        // crashed overflow : ("biggerBetter.sol:BradburyBiggerBetter", "biggerEndBudget.sol:BradburyBiggerEndBudget", "v0.sol:FardalheiraV0a"): Execution
+        // crashed overflow : ("biggerBetter.sol:BradburyBiggerBetter", "biggerEndBudget.sol:BradburyBiggerEndBudget", "v0.sol:FardalheiraV0c"): Execution
+        // crashed overflow : ("biggerBetter.sol:BradburyBiggerBetter", "biggerEndBudget.sol:BradburyBiggerEndBudget", "v0.sol:FardalheiraV0g"): Execution
+        // crashed overflow : ("biggerBetter.sol:BradburyBiggerBetter", "biggerEndBudget.sol:BradburyBiggerEndBudget", "B_moreSpeedInBlitz-bc9de7440086102173b5eec3288da52269448b0e.sol:Bradbury"): Execution
+        // crashed overflow : ("biggerBetter.sol:BradburyBiggerBetter", "biggerEndBudget.sol:BradburyBiggerEndBudget", "Bradbury-88832da3e08842e2f2048fd62ee0fdea284072c3.sol:Bradbury"): Execution
+        // crashed overflow : ("biggerBetter.sol:BradburyBiggerBetter", "evenBiggerAccelFloor.sol:BradburyEvenBiggerAccelFloor", "v0.sol:FardalheiraV0b"): Execution
+        // crashed overflow : ("biggerBetter.sol:BradburyBiggerBetter", "evenBiggerAccelFloor.sol:BradburyEvenBiggerAccelFloor", "v0.sol:FardalheiraV0a"): Execution
+        // crashed overflow : ("biggerBetter.sol:BradburyBiggerBetter", "evenBiggerAccelFloor.sol:BradburyEvenBiggerAccelFloor", "v0.sol:FardalheiraV0e"): Execution
+        // crashed overflow : ("biggerBetter.sol:BradburyBiggerBetter", "evenBiggerAccelFloor.sol:BradburyEvenBiggerAccelFloor", "v0.sol:FardalheiraV0c"): Execution
+        // crashed overflow : ("biggerBetter.sol:BradburyBiggerBetter", "evenBiggerAccelFloor.sol:BradburyEvenBiggerAccelFloor", "v0.sol:FardalheiraV0d"): Execution
+        // crashed overflow : ("biggerBetter.sol:BradburyBiggerBetter", "evenBiggerAccelFloor.sol:BradburyEvenBiggerAccelFloor", "v0.sol:FardalheiraV0f"): Execution
+        // crashed overflow : ("biggerBetter.sol:BradburyBiggerBetter", "evenBiggerAccelFloor.sol:BradburyEvenBiggerAccelFloor", "v0.sol:FardalheiraV0g"): Execution
+        ICar w1 = new BradburyBiggerBetter();
         ICar w2 = new BradburyBiggerEndBudget();
-        ICar w3 = new BradburyEvenBiggerAccelFloor();
-        names[w1] = " BigAccelFloor";
-        names[w2] = "BiggerEndBudget";
-        names[w3] = " EvenBiggerAccelFloor";
+        ICar w3 = new FardalheiraV0d();
+        // names[w1] = " BigAccelFloor";
+        // names[w2] = "BiggerEndBudget";
+        // names[w3] = " EvenBiggerAccelFloor";
 
         monaco.register(w1);
         monaco.register(w2);

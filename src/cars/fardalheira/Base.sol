@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.17;
 
+import "forge-std/console.sol";
 import {Monaco} from "../../Monaco.sol";
 import {BaseCar} from "../BaseCar.sol";
 
@@ -104,9 +105,11 @@ abstract contract FardalheiraBase is BaseCar {
         Strat strat;
 
         /// how much left until blitz starts, or until race ends
-        uint256 remainingDistance = strat == Strat.BLITZKRIEG ? (1000 - state.self.y) : (BLITZKRIEG - state.self.y);
+        uint256 remainingDistance = (allCars[0].y >= BLITZKRIEG) ? (1000 - state.self.y) : (BLITZKRIEG - state.self.y);
+        console.log(remainingDistance);
         /// that distance in turns, based on current speed. if we're stopped, then we assume speed=1
         state.remainingTurns = self.speed > 0 ? (remainingDistance) / (self.speed > 0 ? self.speed : 1) : 1000;
+        if (state.remainingTurns == 0) state.remainingTurns = 1;
 
         if (allCars[0].y >= BLITZKRIEG) {
             // leader is almost at the end! blitzkrieg regardless
