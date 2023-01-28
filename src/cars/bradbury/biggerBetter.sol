@@ -16,7 +16,8 @@ contract BradburyBiggerBetter is BradburyBase {
                 lag_target_spend_pct: 80,
                 hodl_banana_pct: 120,
                 hodl_target_spend_pct: 80,
-                blitz_accel_pct: 300
+                blitz_accel_pct: 300,
+                aggressive_shell_gouging_pct: 200
             })
         )
     {}

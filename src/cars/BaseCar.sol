@@ -162,20 +162,19 @@ abstract contract BaseCar is ICar {
         }
     }
 
-    function aggressive_shell_gouging(Monaco monaco, TurnState memory state) internal {
+    function aggressive_shell_gouging(Monaco monaco, TurnState memory state, uint256 limit) internal {
         uint256 budget = state.balance;
 
         while (true) {
             uint256 shellPrice = monaco.getShellCost(1);
             uint256 superShellPrice = monaco.getSuperShellCost(1);
 
-            if (shellPrice < superShellPrice && shellPrice <= budget && shellPrice < SHELL_FLOOR * 2) {
+            if (shellPrice < superShellPrice && shellPrice <= budget && shellPrice < limit) {
                 monaco.buyShell(1);
                 budget -= shellPrice;
                 state.balance -= shellPrice;
                 state.spent += shellPrice;
-            } else if (superShellPrice <= shellPrice && superShellPrice <= budget && superShellPrice < SHELL_FLOOR * 2)
-            {
+            } else if (superShellPrice <= shellPrice && superShellPrice <= budget && superShellPrice < limit) {
                 monaco.buySuperShell(1);
                 budget -= superShellPrice;
                 state.balance -= superShellPrice;
@@ -186,7 +185,7 @@ abstract contract BaseCar is ICar {
         }
     }
 
-    function tiny_gouge_super_shell(Monaco monaco, TurnState memory state, uint256 /*budget*/ ) internal {
+    function tiny_gouge_super_shell(Monaco monaco, TurnState memory state) internal {
         uint256 budget = state.initialBalance - state.balance;
 
         while (true) {

@@ -19,7 +19,8 @@ contract FardalheiraV0a is FardalheiraBase {
                 lag_target_spend_pct: 90,
                 hodl_banana_pct: 120,
                 hodl_target_spend_pct: 90,
-                blitz_accel_pct: 300
+                blitz_accel_pct: 300,
+                aggressive_shell_gouging_pct: 200
             })
         )
     {}
@@ -39,7 +40,8 @@ contract FardalheiraV0b is FardalheiraBase {
                 lag_target_spend_pct: 90,
                 hodl_banana_pct: 120,
                 hodl_target_spend_pct: 90,
-                blitz_accel_pct: 300
+                blitz_accel_pct: 300,
+                aggressive_shell_gouging_pct: 200
             })
         )
     {}
@@ -59,7 +61,8 @@ contract FardalheiraV0c is FardalheiraBase {
                 lag_target_spend_pct: 90,
                 hodl_banana_pct: 120,
                 hodl_target_spend_pct: 90,
-                blitz_accel_pct: 300
+                blitz_accel_pct: 300,
+                aggressive_shell_gouging_pct: 200
             })
         )
     {}
@@ -79,7 +82,8 @@ contract FardalheiraV0d is FardalheiraBase {
                 lag_target_spend_pct: 90,
                 hodl_banana_pct: 120,
                 hodl_target_spend_pct: 90,
-                blitz_accel_pct: 300
+                blitz_accel_pct: 300,
+                aggressive_shell_gouging_pct: 200
             })
         )
     {}
@@ -99,7 +103,50 @@ contract FardalheiraV0e is FardalheiraBase {
                 lag_target_spend_pct: 90,
                 hodl_banana_pct: 120,
                 hodl_target_spend_pct: 90,
-                blitz_accel_pct: 300
+                blitz_accel_pct: 300,
+                aggressive_shell_gouging_pct: 200
+            })
+        )
+    {}
+}
+
+contract FardalheiraV0f is FardalheiraBase {
+    using SafeCastLib for uint256;
+
+    constructor()
+        FardalheiraBase(
+            "v0f",
+            Params({
+                first_turn_accel: 11,
+                beg_accel_pct: 500,
+                lag_accel_pct: 0,
+                lag_banana_pct: 120,
+                lag_target_spend_pct: 90,
+                hodl_banana_pct: 120,
+                hodl_target_spend_pct: 90,
+                blitz_accel_pct: 300,
+                aggressive_shell_gouging_pct: 300
+            })
+        )
+    {}
+}
+
+contract FardalheiraV0g is FardalheiraBase {
+    using SafeCastLib for uint256;
+
+    constructor()
+        FardalheiraBase(
+            "v0g",
+            Params({
+                first_turn_accel: 11,
+                beg_accel_pct: 500,
+                lag_accel_pct: 0,
+                lag_banana_pct: 120,
+                lag_target_spend_pct: 90,
+                hodl_banana_pct: 120,
+                hodl_target_spend_pct: 90,
+                blitz_accel_pct: 300,
+                aggressive_shell_gouging_pct: 100
             })
         )
     {}

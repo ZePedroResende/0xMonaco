@@ -44,6 +44,7 @@ abstract contract BradburyBase is BaseCar {
         uint256 hodl_target_spend_pct;
         /// blitz strat, % from accel floor price we're willing to take
         uint256 blitz_accel_pct;
+        uint256 aggressive_shell_gouging_pct;
     }
 
     uint256 public immutable first_turn_accel;
@@ -54,6 +55,7 @@ abstract contract BradburyBase is BaseCar {
     uint256 public immutable hodl_banana_pct;
     uint256 public immutable hodl_target_spend_pct;
     uint256 public immutable blitz_accel_pct;
+    uint256 public immutable aggressive_shell_gouging_pct;
     string name;
 
     constructor(string memory _name, Params memory params) {
@@ -66,6 +68,7 @@ abstract contract BradburyBase is BaseCar {
         hodl_banana_pct = params.hodl_banana_pct;
         hodl_target_spend_pct = params.hodl_target_spend_pct;
         blitz_accel_pct = params.blitz_accel_pct;
+        aggressive_shell_gouging_pct = params.aggressive_shell_gouging_pct;
     }
 
     function takeYourTurn(
@@ -192,13 +195,13 @@ abstract contract BradburyBase is BaseCar {
             if (bought == 0) {
                 maybe_buy_shield(monaco, state, 1, SHIELD_FLOOR / 2);
             }
-            aggressive_shell_gouging(monaco, state);
+            aggressive_shell_gouging(monaco, state, SHELL_FLOOR * aggressive_shell_gouging_pct / 100);
         }
     }
 
     function onStratHodl(Monaco monaco, TurnState memory state) internal virtual {
         maybe_banana(monaco, state, BANANA_FLOOR * hodl_banana_pct / 100);
-        aggressive_shell_gouging(monaco, state);
+        aggressive_shell_gouging(monaco, state, SHELL_FLOOR * aggressive_shell_gouging_pct / 100);
     }
 
     function onStratBlitzkrieg(Monaco monaco, TurnState memory state) internal virtual {
@@ -220,7 +223,7 @@ abstract contract BradburyBase is BaseCar {
         // if we can finish in the next 3 rounds, invest in a shield
         if (state.self.y + state.self.speed * 3 >= 1000) {
             maybe_buy_shield(monaco, state, shields_needed, SHIELD_FLOOR * 5);
-            tiny_gouge_super_shell(monaco, state, SHIELD_FLOOR * 5);
+            tiny_gouge_super_shell(monaco, state);
         }
 
         // if we're in first, and 2nd is faster, slow him down
