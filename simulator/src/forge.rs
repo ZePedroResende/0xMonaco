@@ -132,7 +132,7 @@ where
         .with_gas_limit(runner.evm_opts.gas_limit())
         .set_tracing(runner.evm_opts.verbosity >= 3)
         .set_coverage(runner.coverage)
-        .build(db.clone());
+        .build(db);
 
     let mut single_runner = ContractRunner::new(
         executor,
@@ -173,13 +173,25 @@ pub fn print_contract_files_and_names() -> Vec<String>{
     let sources: Vec<(String)> = out
         .contracts_with_files_iter()
         .filter(|(a, _, _)| a.contains("src/cars"))
+        .filter(|(a, _, _)| !a.contains("src/cars/samples"))
+        .filter(|(a, _, _)| !a.contains("src/cars/Example"))
         .map(|(a, b, _)| {
             let a = if a.contains("older_version") {
-                 a.strip_prefix("src/cars/older_version/").unwrap_or(a)
+
+                a.strip_prefix("src/cars/older_version/").unwrap_or(a)
+
             } else if a.contains("samples") {
+
                 a.strip_prefix("src/cars/samples/").unwrap_or(a)
+
+            } else if a.contains("src/cars/bradbury") {
+
+                a.strip_prefix("src/cars/bradbury/").unwrap_or(a)
+
             } else {
+
                 a.strip_prefix("src/cars/").unwrap_or(a)
+
             };
             format!("{a}:{b}")
         })

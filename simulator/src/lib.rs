@@ -13,19 +13,26 @@ use itertools::Itertools;
 
 type Out = (U256,String, U256,String, U256,String );
 pub fn run_simulation() {
-    let contracts : Vec<String> = print_contract_files_and_names()[..3].to_vec();
+    let mut contracts : Vec<String> = print_contract_files_and_names();
 
+    let i = contracts .iter().position(|x| *x == "BaseCar.sol:BaseCar").unwrap();
+
+    contracts.remove(i);
+
+    let i = contracts .iter().position(|x| *x == "Base.sol:BradburyBase").unwrap();
+
+    contracts.remove(i);
 
     println!("{:?}", contracts);
     let permutation  = contracts.into_iter().permutations(3).unique();
 
     permutation.par_bridge().for_each(move |v| {
-        run_test(v);
+        run_test(&v);
     });
 
 }
 
-fn run_test(v: Vec<String>) -> Out{
+fn run_test(v: &[String]){
 
     let mut runner = runner();
 
@@ -36,9 +43,7 @@ fn run_test(v: Vec<String>) -> Out{
         (v[0].to_owned(),v[1].to_owned(),v[2].to_owned()), 
     );
 
-        println!("{},{},{}", v[0], v[1],v[2]);
-        println!("{:?}", calculated);
-        calculated
+        println!("{},{},{};{:?}", v[0], v[1],v[2],calculated);
 }
 
 
