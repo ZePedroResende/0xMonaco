@@ -172,8 +172,9 @@ pub fn print_contract_files_and_names() -> Vec<String>{
 
     let sources: Vec<(String)> = out
         .contracts_with_files_iter()
-        .filter(|(a, _, _)| a.contains("src/cars"))
+        .filter(|(a, _, _)| a.contains("src/cars/bradbury"))
         .filter(|(a, _, _)| !a.contains("src/cars/samples"))
+        .filter(|(a, _, _)| !a.contains("Base"))
         .filter(|(a, _, _)| !a.contains("src/cars/Example"))
         .map(|(a, b, _)| {
             let a = if a.contains("older_version") {
@@ -187,6 +188,10 @@ pub fn print_contract_files_and_names() -> Vec<String>{
             } else if a.contains("src/cars/bradbury") {
 
                 a.strip_prefix("src/cars/bradbury/").unwrap_or(a)
+            
+            } else if a.contains("src/cars/fardalheira/") {
+
+                a.strip_prefix("src/cars/fardalheira/").unwrap_or(a)
 
             } else {
 
