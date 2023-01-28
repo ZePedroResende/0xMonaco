@@ -112,7 +112,7 @@ pub fn execute<T, R>(
     args: T,
 ) -> R
 where
-    T: Tokenize,
+    T: Tokenize + Debug,
     R: Detokenize + Debug,
 {
     let db = Backend::spawn(runner.fork.take());
@@ -132,7 +132,7 @@ where
         .with_gas_limit(runner.evm_opts.gas_limit())
         .set_tracing(runner.evm_opts.verbosity >= 3)
         .set_coverage(runner.coverage)
-        .build(db.clone());
+        .build(db);
 
     let mut single_runner = ContractRunner::new(
         executor,
@@ -147,6 +147,8 @@ where
     let setup = single_runner.setup(false).unwrap();
     let TestSetup { address, .. } = setup;
 
+    let error_string = format!("crashed overflow : {:?}", args);
+
     let result = single_runner
         .executor
         .execute_test::<R, _, _>(
@@ -157,29 +159,46 @@ where
             0.into(),
             single_runner.errors,
         )
-        .unwrap();
+        .expect(&error_string);
 
-    println!("Gas used {fn_name}: {:#?}", result.gas_used);
 
     result.result
 }
 
-pub fn print_contract_files_and_names() -> Vec<String>{
+pub fn print_contract_files_and_names() -> Vec<String> {
     let out = (*COMPILED)
         .clone()
         .output()
         .with_stripped_file_prefixes(PROJECT.root());
 
+
     let sources: Vec<(String)> = out
         .contracts_with_files_iter()
-        .filter(|(a, _, _)| a.contains("src/cars"))
+        .filter(|(a, _, _)| a.contains("src/cars/"))
+        .filter(|(a, _, _)| !a.contains("src/cars/samples"))
+        .filter(|(a, _, _)| !a.contains("Base"))
+        .filter(|(a, _, _)| !a.contains("src/cars/Example"))
         .map(|(a, b, _)| {
             let a = if a.contains("older_version") {
-                 a.strip_prefix("src/cars/older_version/").unwrap_or(a)
+
+                a.strip_prefix("src/cars/older_version/").unwrap_or(a)
+
             } else if a.contains("samples") {
+
                 a.strip_prefix("src/cars/samples/").unwrap_or(a)
+
+            } else if a.contains("src/cars/bradbury") {
+
+                a.strip_prefix("src/cars/bradbury/").unwrap_or(a)
+            
+            } else if a.contains("src/cars/fardalheira/") {
+
+                a.strip_prefix("src/cars/fardalheira/").unwrap_or(a)
+
             } else {
+
                 a.strip_prefix("src/cars/").unwrap_or(a)
+
             };
             format!("{a}:{b}")
         })
