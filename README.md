@@ -1,4 +1,4 @@
-# Williams
+# 0xMonaco
 
 The Subvisual Group repository for 0xMonaco: Battle of Titans, organized by MatchboxDAO in January 2023.
 
